@@ -1,0 +1,357 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@font-face {
+  font-family: 'NanumSquareNeo';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_11-01@1.0/NanumSquareNeo-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: 'Apple SD Gothic Neo', 'Apple SD 산돌고딕 Neo', -apple-system, BlinkMacSystemFont, 'Pretendard Variable', Pretendard, system-ui, Roboto, 'Noto Sans KR', sans-serif;
+}
+
+@layer base {
+  *, ::before, ::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    /* Responsive fluid base typography: dynamically scales comfortably across devices from mobile (15px) up to 4K/large monitors (18px) */
+    font-size: clamp(15px, 0.92rem + 0.35vw, 18px);
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+    -moz-tab-size: 4;
+    tab-size: 4;
+  }
+
+  body {
+    font-family: 'Apple SD Gothic Neo', 'Apple SD 산돌고딕 Neo', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Pretendard Variable', Pretendard, sans-serif;
+    background-color: #F8FAFC;
+    color: #1E293B;
+    letter-spacing: -0.022em;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    line-height: 1.58;
+    font-feature-settings: 'tnum' 1, 'cv05' 1, 'cv08' 1;
+  }
+
+  /* Headings typography enhancement */
+  h1, h2, h3, h4, h5, h6 {
+    color: #0F172A;
+    letter-spacing: -0.03em;
+    line-height: 1.35;
+    font-weight: 700;
+  }
+
+  /* Table and data numeral sharpness */
+  .tabular-nums, .font-mono-tabular {
+    font-family: 'JetBrains Mono', 'Apple SD Gothic Neo', 'Pretendard Variable', monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  button, input, select, textarea {
+    font-family: inherit;
+    letter-spacing: inherit;
+  }
+
+  /* Font Themes - Apple SD Gothic Neo primary */
+  .font-apple-sd {
+    font-family: 'Apple SD Gothic Neo', 'Apple SD 산돌고딕 Neo', -apple-system, BlinkMacSystemFont, 'Pretendard Variable', Pretendard, system-ui, sans-serif !important;
+    letter-spacing: -0.022em;
+  }
+
+  /* Responsive fluid sizing for micro text so it remains crisp and easily readable on all screens */
+  .text-\[10px\] {
+    font-size: clamp(11.5px, 0.72rem + 0.15vw, 13px) !important;
+    line-height: 1.4 !important;
+  }
+  .text-\[11px\] {
+    font-size: clamp(12.5px, 0.78rem + 0.15vw, 14px) !important;
+    line-height: 1.4 !important;
+  }
+  .text-xs {
+    font-size: clamp(13px, 0.82rem + 0.16vw, 14.5px) !important;
+    line-height: 1.45 !important;
+  }
+  .text-sm {
+    font-size: clamp(14px, 0.88rem + 0.2vw, 16px) !important;
+  }
+  .text-base {
+    font-size: clamp(15.5px, 0.95rem + 0.25vw, 17.5px) !important;
+  }
+
+  /* Calendar date cell container & adaptive fluid reservation badge */
+  .calendar-day-cell {
+    container-type: inline-size;
+  }
+
+  .calendar-day-badge {
+    font-size: clamp(9px, 6.2cqw, 11.5px) !important;
+    line-height: 1.25 !important;
+    letter-spacing: -0.02em;
+    word-break: keep-all;
+  }
+}
+
+/* Subtle elevation and card depth enhancements for clarity */
+.card-clean {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+}
+
+.card-clean-hover {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-clean-hover:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* ========================================================================== */
+/* Designer-Grade Light / Dark Mode Color & Contrast Optimization */
+/* ========================================================================== */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0B0F17 !important;
+  color: #E2E8F0 !important;
+}
+
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6 {
+  color: #F8FAFC !important;
+  letter-spacing: -0.015em;
+}
+
+/* Background & Surfaces in Dark Mode */
+html.dark .bg-white {
+  background-color: #111827 !important;
+}
+
+html.dark .bg-\[\#F8FAFC\] {
+  background-color: #0B0F17 !important;
+}
+
+html.dark .bg-\[\#F4F6F8\] {
+  background-color: #1A2234 !important;
+}
+
+html.dark .bg-\[\#F7F8FC\] {
+  background-color: #1A2234 !important;
+}
+
+html.dark .bg-\[\#FFF0F5\] {
+  background-color: #2D1420 !important;
+}
+
+html.dark .bg-\[\#DCFCE7\] {
+  background-color: #064E3B !important;
+}
+
+html.dark .bg-\[\#F3EEFF\] {
+  background-color: rgba(124, 58, 237, 0.2) !important;
+}
+
+html.dark .bg-red-50,
+html.dark .bg-red-50\/80 {
+  background-color: rgba(153, 27, 27, 0.25) !important;
+}
+
+/* Text Colors & Contrast in Dark Mode (WCAG AA & AAA compliant) */
+html.dark .text-\[\#1E232A\],
+html.dark .text-\[\#252B36\],
+html.dark .text-\[\#0F172A\] {
+  color: #F8FAFC !important;
+}
+
+html.dark .text-\[\#475467\],
+html.dark .text-\[\#667085\],
+html.dark .text-\[\#64748B\] {
+  color: #94A3B8 !important;
+}
+
+html.dark .text-\[\#8A91A0\] {
+  color: #94A3B8 !important;
+}
+
+html.dark .text-\[\#166534\] {
+  color: #86EFAC !important;
+}
+
+html.dark .text-\[\#8055E8\] {
+  color: #C084FC !important;
+}
+
+html.dark .text-\[\#D84A78\] {
+  color: #F472B6 !important;
+}
+
+html.dark .text-red-700,
+html.dark .text-red-800 {
+  color: #FCA5A5 !important;
+}
+
+/* Hairline Borders in Dark Mode (Eliminate all rogue white borders) */
+html.dark {
+  --tw-ring-offset-color: transparent !important;
+  --tw-ring-offset-width: 0px !important;
+}
+
+html.dark *,
+html.dark *::before,
+html.dark *::after {
+  --tw-ring-offset-color: transparent !important;
+}
+
+html.dark .border-white,
+html.dark .border-\[\#E2EAE5\],
+html.dark .border-\[\#EEF2F0\],
+html.dark .border-\[\#E2E8F0\],
+html.dark .border-\[\#E5E9EE\],
+html.dark .border-\[\#E9EBF1\],
+html.dark .border-\[\#E4E7EC\],
+html.dark .border-\[\#CBD5E1\],
+html.dark .border-gray-200,
+html.dark .border-gray-300 {
+  border-color: #243048 !important;
+}
+
+html.dark .border-\[\#1E232A\] {
+  border-color: #3B82F6 !important;
+}
+
+html.dark .bg-\[\#FAF8FF\] {
+  background-color: rgba(128, 85, 232, 0.16) !important;
+}
+
+html.dark .bg-\[\#EDFCF2\] {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+
+html.dark .border-\[\#BBF7D0\] {
+  border-color: #065F46 !important;
+}
+
+html.dark .border-\[\#FDE2EB\] {
+  border-color: #4C1D33 !important;
+}
+
+html.dark .border-\[\#D9C8FF\] {
+  border-color: rgba(192, 132, 252, 0.35) !important;
+}
+
+html.dark .border-amber-200 {
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+html.dark .border-red-200 {
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+html.dark .divide-\[\#CBD5E1\] > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-\[\#E9EBF1\] > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-\[\#E2E8F0\] > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #243048 !important;
+}
+
+/* Interactive Hover States in Dark Mode */
+html.dark .hover\:bg-\[\#F8FAFC\]:hover,
+html.dark .hover\:bg-\[\#F4F6F8\]:hover,
+html.dark .hover\:bg-\[\#F7F8FC\]:hover,
+html.dark .hover\:bg-\[\#EEF1F4\]:hover,
+html.dark .hover\:bg-\[\#E9ECEF\]:hover,
+html.dark .hover\:bg-gray-50:hover,
+html.dark .hover\:bg-gray-100:hover {
+  background-color: #222D42 !important;
+}
+
+html.dark .hover\:bg-\[\#BBF7D0\]:hover {
+  background-color: #047857 !important;
+}
+
+html.dark .hover\:text-\[\#1E232A\]:hover,
+html.dark .hover\:text-\[\#252B36\]:hover {
+  color: #FFFFFF !important;
+}
+
+html.dark .hover\:border-\[\#1E232A\]:hover {
+  border-color: #38BDF8 !important;
+}
+
+/* Form Controls in Dark Mode */
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: #1A2234 !important;
+  color: #F8FAFC !important;
+  border-color: #2E3E5B !important;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+  border-color: #38BDF8 !important;
+  outline: none !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748B !important;
+}
+
+/* Gradients in Dark Mode */
+html.dark aside,
+html.dark .from-\[\#F8FAFC\].to-\[\#FFFFFF\],
+html.dark .from-\[\#F8FAFC\].to-white {
+  background-image: linear-gradient(to right, #0F172A, #111827) !important;
+}
+
+/* Elevated Cards & Modals */
+html.dark .card-clean {
+  background-color: #111827;
+  border-color: #1E293B;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .card-clean-hover:hover {
+  border-color: #334155;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+}
+
+/* Active Navigation Tabs */
+html.dark .sidebar-active-tab {
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px -2px rgba(37, 99, 235, 0.5) !important;
+}
+
+/* Smooth Transition between White and Dark Themes */
+body,
+aside,
+header,
+main,
+button,
+input,
+select,
+.card-clean,
+[class*="bg-"] {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+

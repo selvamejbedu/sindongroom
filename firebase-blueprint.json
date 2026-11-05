@@ -1,0 +1,574 @@
+{
+  "entities": {
+    "SpecialRoom": {
+      "title": "SpecialRoom",
+      "description": "Special classroom metadata and operational availability.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "schoolId": {
+          "type": "string",
+          "enum": ["jeonju-sindong"],
+          "maxLength": 32
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "colorKey": {
+          "type": "string",
+          "enum": ["purple", "blue", "teal", "emerald", "amber", "rose", "indigo", "cyan"]
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "floor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "capacity": {
+          "type": "integer"
+        },
+        "availablePeriods": {
+          "type": "array",
+          "description": "Bounded list of available periods (1..6)"
+        },
+        "equipment": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "managerName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "guidelines": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "schoolId",
+        "name",
+        "category",
+        "colorKey",
+        "location",
+        "floor",
+        "capacity",
+        "availablePeriods",
+        "equipment",
+        "managerName",
+        "guidelines",
+        "active",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Reservation": {
+      "title": "Reservation",
+      "description": "Special room reservation record by teacher and class without login requirement.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "schoolId": {
+          "type": "string",
+          "enum": ["jeonju-sindong"],
+          "maxLength": 32
+        },
+        "roomId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "roomName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "roomCategory": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "roomColor": {
+          "type": "string",
+          "enum": ["purple", "blue", "teal", "emerald", "amber", "rose", "indigo", "cyan"]
+        },
+        "userName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "userId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "userEmail": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "date": {
+          "type": "string",
+          "maxLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "startPeriod": {
+          "type": "integer"
+        },
+        "endPeriod": {
+          "type": "integer"
+        },
+        "grade": {
+          "type": "integer"
+        },
+        "classNum": {
+          "type": "integer"
+        },
+        "classLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "status": {
+          "type": "string",
+          "enum": ["confirmed", "cancelled"]
+        },
+        "seriesId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "recurrenceSummary": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "source": {
+          "type": "string",
+          "enum": ["manual", "timetable", "ai"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "schoolId",
+        "roomId",
+        "roomName",
+        "roomCategory",
+        "roomColor",
+        "userName",
+        "date",
+        "startPeriod",
+        "endPeriod",
+        "grade",
+        "classNum",
+        "classLabel",
+        "status",
+        "seriesId",
+        "recurrenceSummary",
+        "source",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SlotLock": {
+      "title": "SlotLock",
+      "description": "Atomic per-period slot lock document preventing concurrent double-booking.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "schoolId": {
+          "type": "string",
+          "enum": ["jeonju-sindong"],
+          "maxLength": 32
+        },
+        "roomId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "date": {
+          "type": "string",
+          "maxLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "period": {
+          "type": "integer"
+        },
+        "reservationId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "schoolId",
+        "roomId",
+        "date",
+        "period",
+        "reservationId",
+        "userName",
+        "updatedAt"
+      ]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "School-wide notice regarding special rooms.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "schoolId": {
+          "type": "string",
+          "enum": ["jeonju-sindong"],
+          "maxLength": 32
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1500
+        },
+        "category": {
+          "type": "string",
+          "enum": ["general", "maintenance", "event", "urgent"]
+        },
+        "pinned": {
+          "type": "boolean"
+        },
+        "authorName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "schoolId",
+        "title",
+        "content",
+        "category",
+        "pinned",
+        "authorName",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Append-only audit trail for reservations.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "schoolId": {
+          "type": "string",
+          "enum": ["jeonju-sindong"],
+          "maxLength": 32
+        },
+        "actorName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "create_reservation",
+            "update_reservation",
+            "cancel_reservation",
+            "manage_room",
+            "manage_settings"
+          ]
+        },
+        "targetId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 250
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "schoolId",
+        "actorName",
+        "action",
+        "targetId",
+        "summary",
+        "createdAt"
+      ]
+    },
+    "SchoolSettings": {
+      "title": "SchoolSettings",
+      "description": "School timetable period times (periods 1-6) and reservation policy configuration.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "schoolId": {
+          "type": "string",
+          "enum": ["jeonju-sindong"],
+          "maxLength": 32
+        },
+        "schoolName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "maxAdvanceDays": {
+          "type": "integer"
+        },
+        "allowTeacherRecurring": {
+          "type": "boolean"
+        },
+        "p1Start": {
+          "type": "string",
+          "maxLength": 5,
+          "pattern": "^\\d{2}:\\d{2}$"
+        },
+        "p1End": {
+          "type": "string",
+          "maxLength": 5,
+          "pattern": "^\\d{2}:\\d{2}$"
+        },
+        "p2Start": {
+          "type": "string",
+          "maxLength": 5,
+          "pattern": "^\\d{2}:\\d{2}$"
+        },
+        "p2End": {
+          "type": "string",
+          "maxLength": 5,
+          "pattern": "^\\d{2}:\\d{2}$"
+        },
+        "p3Start": {
+          "type": "string",
+          "maxLength": 5,
+          "pattern": "^\\d{2}:\\d{2}$"
+        },
+        "p3End": {
+          "type": "string",
+          "maxLength": 5,
+          "pattern": "^\\d{2}:\\d{2}$"
+        },
+        "p4Start": {
+          "type": "string",
+          "maxLength": 5,
+          "pattern": "^\\d{2}:\\d{2}$"
+        },
+        "p4End": {
+          "type": "string",
+          "maxLength": 5,
+          "pattern": "^\\d{2}:\\d{2}$"
+        },
+        "p5Start": {
+          "type": "string",
+          "maxLength": 5,
+          "pattern": "^\\d{2}:\\d{2}$"
+        },
+        "p5End": {
+          "type": "string",
+          "maxLength": 5,
+          "pattern": "^\\d{2}:\\d{2}$"
+        },
+        "p6Start": {
+          "type": "string",
+          "maxLength": 5,
+          "pattern": "^\\d{2}:\\d{2}$"
+        },
+        "p6End": {
+          "type": "string",
+          "maxLength": 5,
+          "pattern": "^\\d{2}:\\d{2}$"
+        },
+        "updatedBy": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "schoolId",
+        "schoolName",
+        "maxAdvanceDays",
+        "allowTeacherRecurring",
+        "p1Start",
+        "p1End",
+        "p2Start",
+        "p2End",
+        "p3Start",
+        "p3End",
+        "p4Start",
+        "p4End",
+        "p5Start",
+        "p5End",
+        "p6Start",
+        "p6End",
+        "updatedBy",
+        "updatedAt"
+      ]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile for teachers and administrators authenticated with Google.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "schoolId": {
+          "type": "string",
+          "enum": ["jeonju-sindong"],
+          "maxLength": 32
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "photoURL": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "teacher"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "schoolId",
+        "email",
+        "displayName",
+        "role",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profiles for authenticated teachers and admins."
+    },
+    "/rooms/{roomId}": {
+      "schema": "SpecialRoom",
+      "description": "Special classrooms and facilities in Jeonju Sindong Elementary School."
+    },
+    "/reservations/{reservationId}": {
+      "schema": "Reservation",
+      "description": "Special room reservations without login requirement."
+    },
+    "/slotLocks/{slotKey}": {
+      "schema": "SlotLock",
+      "description": "Atomic per-period slot lock documents to prevent concurrent double-booking."
+    },
+    "/announcements/{announcementId}": {
+      "schema": "Announcement",
+      "description": "Facility announcements and notices."
+    },
+    "/auditLogs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Append-only audit trail for reservations and facility operations."
+    },
+    "/settings/{settingId}": {
+      "schema": "SchoolSettings",
+      "description": "School timetable period times and reservation policies."
+    }
+  }
+}

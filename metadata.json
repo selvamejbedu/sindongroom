@@ -1,0 +1,8 @@
+{
+  "name": "전주신동초 특별실 관리",
+  "description": "전주신동초등학교 교직원을 위한 시간표 중심 특별실 예약 및 통합 관리 시스템",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

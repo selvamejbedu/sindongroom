@@ -1,0 +1,294 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // Primitives
+    // =========================================================================
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidColorKey(color) {
+      return color is string && color in ['purple', 'blue', 'teal', 'emerald', 'amber', 'rose', 'indigo', 'cyan'];
+    }
+
+    function isValidDateStr(d) {
+      return d is string && d.size() == 10 && d.matches('^\\d{4}-\\d{2}-\\d{2}$');
+    }
+
+    function isValidTimeStr(t) {
+      return t is string && t.size() == 5 && t.matches('^\\d{2}:\\d{2}$');
+    }
+
+    // =========================================================================
+    // Entity Validations
+    // =========================================================================
+    function isValidSpecialRoom(data) {
+      return data.keys().hasAll([
+          'id', 'schoolId', 'name', 'category', 'colorKey', 'location', 'floor',
+          'capacity', 'availablePeriods', 'equipment', 'managerName', 'guidelines',
+          'active', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'schoolId', 'name', 'category', 'colorKey', 'location', 'floor',
+          'capacity', 'availablePeriods', 'equipment', 'managerName', 'guidelines',
+          'active', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.schoolId is string && data.schoolId == 'jeonju-sindong' && data.schoolId.size() <= 32 &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 60 &&
+        data.category is string && data.category.size() >= 1 && data.category.size() <= 40 &&
+        isValidColorKey(data.colorKey) &&
+        data.location is string && data.location.size() >= 1 && data.location.size() <= 80 &&
+        data.floor is string && data.floor.size() >= 1 && data.floor.size() <= 20 &&
+        data.capacity is int && data.capacity >= 1 && data.capacity <= 300 &&
+        data.availablePeriods is list && data.availablePeriods.size() >= 1 && data.availablePeriods.size() <= 6 &&
+        data.availablePeriods[0] is int && data.availablePeriods.hasOnly([1, 2, 3, 4, 5, 6]) &&
+        data.equipment is string && data.equipment.size() <= 300 &&
+        data.managerName is string && data.managerName.size() >= 1 && data.managerName.size() <= 60 &&
+        data.guidelines is string && data.guidelines.size() <= 500 &&
+        data.active is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidReservation(data) {
+      return data.keys().hasAll([
+          'id', 'schoolId', 'roomId', 'roomName', 'roomCategory', 'roomColor',
+          'userName', 'date', 'startPeriod', 'endPeriod',
+          'grade', 'classNum', 'classLabel', 'status',
+          'seriesId', 'recurrenceSummary', 'source', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'schoolId', 'roomId', 'roomName', 'roomCategory', 'roomColor',
+          'userName', 'date', 'startPeriod', 'endPeriod',
+          'grade', 'classNum', 'classLabel', 'status',
+          'seriesId', 'recurrenceSummary', 'source', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.schoolId is string && data.schoolId == 'jeonju-sindong' && data.schoolId.size() <= 32 &&
+        isValidId(data.roomId) &&
+        data.roomName is string && data.roomName.size() >= 1 && data.roomName.size() <= 60 &&
+        data.roomCategory is string && data.roomCategory.size() >= 1 && data.roomCategory.size() <= 40 &&
+        isValidColorKey(data.roomColor) &&
+        data.userName is string && data.userName.size() >= 1 && data.userName.size() <= 60 &&
+        isValidDateStr(data.date) &&
+        data.startPeriod is int && data.startPeriod >= 1 && data.startPeriod <= 6 &&
+        data.endPeriod is int && data.endPeriod >= data.startPeriod && data.endPeriod <= 6 &&
+        data.grade is int && data.grade >= 0 && data.grade <= 6 &&
+        data.classNum is int && data.classNum >= 0 && data.classNum <= 20 &&
+        data.classLabel is string && data.classLabel.size() >= 1 && data.classLabel.size() <= 40 &&
+        data.status is string && data.status in ['confirmed', 'cancelled'] &&
+        data.seriesId is string && data.seriesId.size() <= 128 &&
+        data.recurrenceSummary is string && data.recurrenceSummary.size() <= 120 &&
+        data.source is string && data.source in ['manual', 'timetable', 'ai'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidSlotLock(data) {
+      return data.keys().hasAll([
+          'id', 'schoolId', 'roomId', 'date', 'period', 'reservationId', 'userName', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'schoolId', 'roomId', 'date', 'period', 'reservationId', 'userName', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.schoolId is string && data.schoolId == 'jeonju-sindong' && data.schoolId.size() <= 32 &&
+        isValidId(data.roomId) &&
+        isValidDateStr(data.date) &&
+        data.period is int && data.period >= 1 && data.period <= 6 &&
+        isValidId(data.reservationId) &&
+        data.userName is string && data.userName.size() >= 1 && data.userName.size() <= 60 &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAnnouncement(data) {
+      return data.keys().hasAll([
+          'id', 'schoolId', 'title', 'content', 'category', 'pinned',
+          'authorName', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'schoolId', 'title', 'content', 'category', 'pinned',
+          'authorName', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.schoolId is string && data.schoolId == 'jeonju-sindong' && data.schoolId.size() <= 32 &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+        data.content is string && data.content.size() >= 1 && data.content.size() <= 1500 &&
+        data.category is string && data.category in ['general', 'maintenance', 'event', 'urgent'] &&
+        data.pinned is bool &&
+        data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 60 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAuditLog(data) {
+      return data.keys().hasAll([
+          'id', 'schoolId', 'actorName', 'action', 'targetId', 'summary', 'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'schoolId', 'actorName', 'action', 'targetId', 'summary', 'createdAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.schoolId is string && data.schoolId == 'jeonju-sindong' && data.schoolId.size() <= 32 &&
+        data.actorName is string && data.actorName.size() >= 1 && data.actorName.size() <= 60 &&
+        data.action is string && data.action in [
+          'create_reservation', 'update_reservation', 'cancel_reservation',
+          'manage_room', 'manage_settings'
+        ] &&
+        isValidId(data.targetId) &&
+        data.summary is string && data.summary.size() >= 1 && data.summary.size() <= 250 &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidSchoolSettings(data) {
+      return data.keys().hasAll([
+          'id', 'schoolId', 'schoolName', 'maxAdvanceDays', 'allowTeacherRecurring',
+          'p1Start', 'p1End', 'p2Start', 'p2End', 'p3Start', 'p3End',
+          'p4Start', 'p4End', 'p5Start', 'p5End', 'p6Start', 'p6End',
+          'updatedBy', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'schoolId', 'schoolName', 'maxAdvanceDays', 'allowTeacherRecurring',
+          'p1Start', 'p1End', 'p2Start', 'p2End', 'p3Start', 'p3End',
+          'p4Start', 'p4End', 'p5Start', 'p5End', 'p6Start', 'p6End',
+          'updatedBy', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.schoolId is string && data.schoolId == 'jeonju-sindong' && data.schoolId.size() <= 32 &&
+        data.schoolName is string && data.schoolName.size() >= 1 && data.schoolName.size() <= 80 &&
+        data.maxAdvanceDays is int && data.maxAdvanceDays >= 1 && data.maxAdvanceDays <= 365 &&
+        data.allowTeacherRecurring is bool &&
+        isValidTimeStr(data.p1Start) && isValidTimeStr(data.p1End) &&
+        isValidTimeStr(data.p2Start) && isValidTimeStr(data.p2End) &&
+        isValidTimeStr(data.p3Start) && isValidTimeStr(data.p3End) &&
+        isValidTimeStr(data.p4Start) && isValidTimeStr(data.p4End) &&
+        isValidTimeStr(data.p5Start) && isValidTimeStr(data.p5End) &&
+        isValidTimeStr(data.p6Start) && isValidTimeStr(data.p6End) &&
+        data.updatedBy is string && data.updatedBy.size() <= 128 &&
+        data.updatedAt is timestamp;
+    }
+
+    // =========================================================================
+    // Collections (No Login Requirement)
+    // =========================================================================
+    match /rooms/{roomId} {
+      allow get: if isValidId(roomId);
+      allow list: if true;
+      allow create: if isValidId(roomId) &&
+        isValidSpecialRoom(incoming()) &&
+        incoming().id == roomId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(roomId) &&
+        isValidSpecialRoom(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().schoolId == existing().schoolId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(roomId);
+    }
+
+    match /reservations/{reservationId} {
+      allow get: if isValidId(reservationId);
+      allow list: if true;
+      allow create: if isValidId(reservationId) &&
+        isValidReservation(incoming()) &&
+        incoming().id == reservationId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (exists(/databases/$(database)/documents/rooms/$(incoming().roomId)) ||
+         existsAfter(/databases/$(database)/documents/rooms/$(incoming().roomId)));
+      allow update: if isValidId(reservationId) &&
+        isValidReservation(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().schoolId == existing().schoolId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (exists(/databases/$(database)/documents/rooms/$(incoming().roomId)) ||
+         existsAfter(/databases/$(database)/documents/rooms/$(incoming().roomId)));
+      allow delete: if isValidId(reservationId);
+    }
+
+    match /slotLocks/{slotKey} {
+      allow get: if isValidId(slotKey);
+      allow list: if true;
+      allow create: if isValidId(slotKey) &&
+        isValidSlotLock(incoming()) &&
+        incoming().id == slotKey &&
+        incoming().updatedAt == request.time &&
+        (exists(/databases/$(database)/documents/reservations/$(incoming().reservationId)) ||
+         existsAfter(/databases/$(database)/documents/reservations/$(incoming().reservationId)));
+      allow update: if isValidId(slotKey) &&
+        isValidSlotLock(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().schoolId == existing().schoolId &&
+        incoming().roomId == existing().roomId &&
+        incoming().date == existing().date &&
+        incoming().period == existing().period &&
+        incoming().updatedAt == request.time &&
+        (exists(/databases/$(database)/documents/reservations/$(incoming().reservationId)) ||
+         existsAfter(/databases/$(database)/documents/reservations/$(incoming().reservationId)));
+      allow delete: if isValidId(slotKey);
+    }
+
+    match /announcements/{announcementId} {
+      allow get: if isValidId(announcementId);
+      allow list: if true;
+      allow create: if isValidId(announcementId) &&
+        isValidAnnouncement(incoming()) &&
+        incoming().id == announcementId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(announcementId) &&
+        isValidAnnouncement(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().schoolId == existing().schoolId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(announcementId);
+    }
+
+    match /auditLogs/{logId} {
+      allow get: if isValidId(logId);
+      allow list: if true;
+      allow create: if isValidId(logId) &&
+        isValidAuditLog(incoming()) &&
+        incoming().id == logId &&
+        incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isValidId(logId);
+    }
+
+    match /settings/{settingId} {
+      allow get: if isValidId(settingId);
+      allow list: if true;
+      allow create: if isValidId(settingId) &&
+        isValidSchoolSettings(incoming()) &&
+        incoming().id == settingId &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(settingId) &&
+        isValidSchoolSettings(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().schoolId == existing().schoolId &&
+        incoming().updatedAt == request.time;
+      allow delete: if false;
+    }
+  }
+}
