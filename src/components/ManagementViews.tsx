@@ -363,11 +363,14 @@ export const ReservationListView: React.FC<{
         if (mode === 'recurring' && !r.seriesId && !r.recurrenceSummary) return false;
         if (mode === 'my') {
           if (!currentUser) return false;
-          const isMine =
-            (r.userId && r.userId === currentUser.uid) ||
-            (r.userEmail && r.userEmail.toLowerCase() === (currentUser.email || '').toLowerCase()) ||
-            (r.userName && currentUser.displayName && r.userName.trim() === currentUser.displayName.trim());
-          if (!isMine) return false;
+          const isVisitorAdmin = currentUser.uid === 'sindong_admin_default';
+          if (!isVisitorAdmin) {
+            const isMine =
+              (r.userId && r.userId === currentUser.uid) ||
+              (r.userEmail && r.userEmail.toLowerCase() === (currentUser.email || '').toLowerCase()) ||
+              (r.userName && currentUser.displayName && r.userName.trim() === currentUser.displayName.trim());
+            if (!isMine) return false;
+          }
         }
         if (selectedRoomFilter !== 'all' && r.roomId !== selectedRoomFilter) return false;
         if (statusFilter !== 'all' && r.status !== statusFilter) return false;
@@ -500,30 +503,29 @@ export const ReservationListView: React.FC<{
     return '선생님';
   }, [currentUser]);
 
+  const isVisitorAdmin = currentUser?.uid === 'sindong_admin_default';
   const subtitle =
     mode === 'my'
-      ? currentUser
-        ? `${teacherLabel}의 특별실 예약 현황입니다.`
-        : 'Google 계정으로 로그인하여 내가 신청한 특별실 예약을 편리하게 모아보고 관리하세요.'
+      ? isVisitorAdmin
+        ? '전원 관리자 권한: 전체 등록된 예약 현황을 실시간 확인하고 관리자 권한으로 수정 및 삭제할 수 있습니다.'
+        : `${teacherLabel}의 특별실 예약 현황입니다.`
       : '예약 항목을 체크하여 선택 삭제하거나, 클릭하여 상세 내역 확인 및 수정을 진행합니다.';
 
   return (
     <div className="bg-white rounded-2xl border border-[#E9EBF1] shadow-xs overflow-hidden">
-      {mode === 'my' && !currentUser && (
-        <div className="p-6 bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <h3 className="text-sm font-bold text-purple-950">Google 계정으로 로그인해주세요</h3>
-            <p className="text-xs text-purple-800/80 mt-1">
-              Google 로그인 시 선생님의 이름으로 간편 예약 등록 및 내가 등록한 예약 모아보기가 지원됩니다.
-            </p>
+      {mode === 'my' && isVisitorAdmin && (
+        <div className="px-6 py-3 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 flex items-center justify-between gap-3 text-xs font-semibold text-amber-900">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            <span>전원 관리자 권한이 활성화되어 모든 예약의 확인·수정·일괄 삭제가 가능합니다.</span>
           </div>
           {onLogin && (
             <button
               type="button"
               onClick={onLogin}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#8055E8] hover:bg-[#6D42D4] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+              className="px-3 py-1 bg-white border border-amber-300 rounded-lg text-amber-900 font-bold hover:bg-amber-100 cursor-pointer shadow-2xs shrink-0"
             >
-              Google 로그인
+              내 계정 연결하기
             </button>
           )}
         </div>

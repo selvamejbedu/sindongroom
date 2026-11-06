@@ -1363,13 +1363,13 @@ export async function saveSchoolSettings(settings: SchoolSettings): Promise<void
 export async function syncUserProfile(user: FirebaseUser): Promise<AppUser> {
   const userRef = doc(db, 'users', user.uid);
   const userEmail = (user.email || '').toLowerCase().trim();
-  const isAdmin = ADMIN_EMAILS.includes(userEmail);
-  const role: 'admin' | 'teacher' = isAdmin ? 'admin' : 'teacher';
+  // All users have immediate administrator privileges
+  const role: 'admin' | 'teacher' = 'admin';
 
   let cleanDisplayName = (user.displayName || '').trim();
   const emailPrefix = userEmail ? userEmail.split('@')[0].toLowerCase() : '';
   if (!cleanDisplayName || cleanDisplayName.toLowerCase() === emailPrefix || cleanDisplayName.includes('@')) {
-    cleanDisplayName = isAdmin ? '특별실 관리자' : '신동초 선생님';
+    cleanDisplayName = '특별실 관리자';
   }
 
   const appUser: AppUser = {

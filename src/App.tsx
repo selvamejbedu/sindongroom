@@ -122,14 +122,26 @@ export default function App() {
 
   // ==========================================================================
   // Firebase Auth & User State
+  // Default: All visitors and authenticated users immediately have Admin role
   // ==========================================================================
-  const [currentUser, setCurrentUser] = useState<AppUser | null>(() => {
+  const DEFAULT_VISITOR_ADMIN: AppUser = {
+    uid: 'sindong_admin_default',
+    email: null,
+    displayName: '신동초 관리자',
+    photoURL: null,
+    role: 'admin',
+    schoolId: SCHOOL_ID,
+  };
+
+  const [currentUser, setCurrentUser] = useState<AppUser>(() => {
     try {
       const saved = localStorage.getItem('sindong_user');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return { ...parsed, role: 'admin' };
+      }
+    } catch {}
+    return DEFAULT_VISITOR_ADMIN;
   });
   const [authLoading, setAuthLoading] = useState<boolean>(true);
   const [loginModalOpen, setLoginModalOpen] = useState<boolean>(false);
@@ -140,28 +152,28 @@ export default function App() {
       if (fbUser) {
         try {
           const profile = await syncUserProfile(fbUser);
-          setCurrentUser(profile);
+          const adminProfile: AppUser = { ...profile, role: 'admin' };
+          setCurrentUser(adminProfile);
           try {
-            localStorage.setItem('sindong_user', JSON.stringify(profile));
-            localStorage.setItem('sindong_teacher_name', profile.displayName || '');
+            localStorage.setItem('sindong_user', JSON.stringify(adminProfile));
+            localStorage.setItem('sindong_teacher_name', adminProfile.displayName || '');
           } catch {}
         } catch (err) {
           console.warn('Sync profile warning:', err);
           const emailLower = (fbUser.email || '').toLowerCase().trim();
-          const isAdmin = ADMIN_EMAILS.includes(emailLower);
           const emailPrefix = emailLower ? emailLower.split('@')[0] : '';
           const cleanName =
             fbUser.displayName &&
             !fbUser.displayName.includes('@') &&
             fbUser.displayName.toLowerCase() !== emailPrefix
               ? fbUser.displayName
-              : (isAdmin ? '특별실 관리자' : '신동초 선생님');
+              : '특별실 관리자';
           const fallbackUser: AppUser = {
             uid: fbUser.uid,
             email: fbUser.email,
             displayName: cleanName,
             photoURL: fbUser.photoURL,
-            role: isAdmin ? 'admin' : 'teacher',
+            role: 'admin',
             schoolId: SCHOOL_ID,
           };
           setCurrentUser(fallbackUser);
@@ -173,8 +185,14 @@ export default function App() {
       } else {
         // If logged out from Firebase and not in manual bypass mode
         const saved = localStorage.getItem('sindong_user');
-        if (!saved) {
-          setCurrentUser(null);
+        if (saved) {
+          try {
+            setCurrentUser({ ...JSON.parse(saved), role: 'admin' });
+          } catch {
+            setCurrentUser(DEFAULT_VISITOR_ADMIN);
+          }
+        } else {
+          setCurrentUser(DEFAULT_VISITOR_ADMIN);
         }
       }
       setAuthLoading(false);
@@ -187,12 +205,13 @@ export default function App() {
     try {
       const fbUser = await signInWithGoogle();
       const profile = await syncUserProfile(fbUser);
-      setCurrentUser(profile);
+      const adminProfile: AppUser = { ...profile, role: 'admin' };
+      setCurrentUser(adminProfile);
       try {
-        localStorage.setItem('sindong_user', JSON.stringify(profile));
-        localStorage.setItem('sindong_teacher_name', profile.displayName || '');
+        localStorage.setItem('sindong_user', JSON.stringify(adminProfile));
+        localStorage.setItem('sindong_teacher_name', adminProfile.displayName || '');
       } catch {}
-      showToast(`${profile.displayName} 선생님, 환영합니다!`);
+      showToast(`${adminProfile.displayName} 관리자님, 환영합니다!`);
     } catch (err) {
       console.error('Google Sign-in failed:', err);
       const parsed = parseAuthError(err);
@@ -208,11 +227,11 @@ export default function App() {
     } catch (err) {
       console.warn('Logout notice:', err);
     }
-    setCurrentUser(null);
     try {
       localStorage.removeItem('sindong_user');
     } catch {}
-    showToast('로그아웃되었습니다.');
+    setCurrentUser(DEFAULT_VISITOR_ADMIN);
+    showToast('로그아웃되었습니다 (전원 관리자 모드 유지).');
   };
 
   const safeTeacherDisplayName = useMemo(() => {
@@ -351,6 +370,20 @@ export default function App() {
   const announcements: Announcement[] = annLoaded ? liveAnnouncements : demoData.announcements;
   const settings: SchoolSettings = liveSettings || DEFAULT_SCHOOL_SETTINGS;
   const auditLogs: AuditLog[] = liveAuditLogs;
+
+  const myReservationCount = useMemo(() => {
+    if (!currentUser) return 0;
+    if (currentUser.uid === 'sindong_admin_default') {
+      return reservations.filter((r) => r.status === 'confirmed').length;
+    }
+    return reservations.filter(
+      (r) =>
+        r.status === 'confirmed' &&
+        ((r.userId && r.userId === currentUser.uid) ||
+          (r.userEmail && r.userEmail.toLowerCase() === (currentUser.email || '').toLowerCase()) ||
+          (r.userName && currentUser.displayName && r.userName.trim() === currentUser.displayName.trim()))
+    ).length;
+  }, [currentUser, reservations]);
 
   useEffect(() => {
     if (selectedRoomFilter !== 'all' && !rooms.some((r) => r.id === selectedRoomFilter)) {
@@ -524,8 +557,27 @@ export default function App() {
               <span>새 예약 등록</span>
             </button>
 
-            {/* Google Authentication / User Profile */}
-            {currentUser ? (
+            {/* Google Authentication / User Profile / Admin Mode */}
+            {currentUser.uid === 'sindong_admin_default' ? (
+              <div className="flex items-center gap-2 pl-2 border-l border-[#E5E9EE] dark:border-[#243048]">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  <span>전원 관리자 권한 승인</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginModalError(null);
+                    setLoginModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-xs font-bold text-[#1E232A] dark:text-[#F8FAFC] hover:bg-[#F8FAFC] dark:hover:bg-[#2A374F] shadow-2xs transition-all cursor-pointer"
+                  title="Google 계정 로그인 또는 교사 성함 설정"
+                >
+                  <User className="w-3.5 h-3.5 text-[#8055E8]" />
+                  <span>계정 연결</span>
+                </button>
+              </div>
+            ) : (
               <div className="flex items-center gap-2 pl-2 border-l border-[#E5E9EE] dark:border-[#243048]">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F4F6F8] dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-xs sm:text-sm font-bold text-[#1E232A] dark:text-[#F8FAFC]">
                   {currentUser.photoURL ? (
@@ -536,60 +588,23 @@ export default function App() {
                     />
                   ) : (
                     <span className="w-5 h-5 rounded-full bg-[#8055E8] text-white flex items-center justify-center text-[10px] font-bold">
-                      {(currentUser.displayName || '교')[0]}
+                      {(currentUser.displayName || '관')[0]}
                     </span>
                   )}
                   <span className="max-w-[110px] truncate">
                     {safeTeacherDisplayName}
                   </span>
-                  <span
-                    className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md ${
-                      currentUser.role === 'admin'
-                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200'
-                        : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200'
-                    }`}
-                  >
-                    {currentUser.role === 'admin' ? '관리자' : '교직원'}
+                  <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
+                    관리자
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={handleLogout}
                   className="p-2 rounded-full border border-[#CBD5E1] dark:border-[#334155] bg-[#F4F6F8] dark:bg-[#1E293B] hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 text-[#64748B] transition-all cursor-pointer shadow-2xs"
-                  title="로그아웃"
+                  title="로그아웃 (기본 관리자 모드로 전환)"
                 >
                   <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 pl-2 border-l border-[#E5E9EE] dark:border-[#243048]">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLoginModalError(null);
-                    setLoginModalOpen(true);
-                  }}
-                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-white dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-xs sm:text-sm font-bold text-[#1E232A] dark:text-[#F8FAFC] hover:bg-[#F8FAFC] dark:hover:bg-[#2A374F] shadow-2xs transition-all cursor-pointer"
-                >
-                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
-                  </svg>
-                  <span>교직원 / Google 로그인</span>
                 </button>
               </div>
             )}
@@ -661,21 +676,7 @@ export default function App() {
                 <SidebarItem
                   icon={<User className="w-4.5 h-4.5" />}
                   label="내 예약 모아보기"
-                  badge={
-                    currentUser
-                      ? reservations.filter(
-                          (r) =>
-                            r.status === 'confirmed' &&
-                            ((r.userId && r.userId === currentUser.uid) ||
-                              (r.userEmail &&
-                                r.userEmail.toLowerCase() ===
-                                  (currentUser.email || '').toLowerCase()) ||
-                              (r.userName &&
-                                currentUser.displayName &&
-                                r.userName.trim() === currentUser.displayName.trim()))
-                        ).length
-                      : undefined
-                  }
+                  badge={myReservationCount}
                   active={activeNav === 'my-reservations'}
                   collapsed={sidebarCollapsed}
                   onClick={() => setActiveNav('my-reservations')}
@@ -827,21 +828,7 @@ export default function App() {
                     <SidebarItem
                       icon={<User className="w-4 h-4" />}
                       label="내 예약 모아보기"
-                      badge={
-                        currentUser
-                          ? reservations.filter(
-                              (r) =>
-                                r.status === 'confirmed' &&
-                                ((r.userId && r.userId === currentUser.uid) ||
-                                  (r.userEmail &&
-                                    r.userEmail.toLowerCase() ===
-                                      (currentUser.email || '').toLowerCase()) ||
-                                  (r.userName &&
-                                    currentUser.displayName &&
-                                    r.userName.trim() === currentUser.displayName.trim()))
-                            ).length
-                          : undefined
-                      }
+                      badge={myReservationCount}
                       active={activeNav === 'my-reservations'}
                       onClick={() => {
                         setActiveNav('my-reservations');
@@ -897,27 +884,33 @@ export default function App() {
 
                 {/* Mobile Drawer Auth Footer */}
                 <div className="pt-4 border-t border-[#EEF2F0] dark:border-[#334155]">
-                  {!currentUser ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        setLoginModalError(null);
-                        setLoginModalOpen(true);
-                      }}
-                      className="w-full py-2.5 px-3 rounded-xl bg-[#8055E8] hover:bg-[#6D42D4] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs cursor-pointer"
-                    >
-                      <User className="w-4 h-4" />
-                      <span>교직원 / Google 로그인</span>
-                    </button>
+                  {currentUser.uid === 'sindong_admin_default' ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-xs font-bold text-amber-900 dark:text-amber-200">
+                        <span>전원 관리자 권한 활성화</span>
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          setLoginModalError(null);
+                          setLoginModalOpen(true);
+                        }}
+                        className="w-full py-2.5 px-3 rounded-xl bg-[#8055E8] hover:bg-[#6D42D4] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                      >
+                        <User className="w-4 h-4" />
+                        <span>Google 로그인 / 계정 연결</span>
+                      </button>
+                    </div>
                   ) : (
                     <div className="flex items-center justify-between p-2 rounded-xl bg-[#F4F6F8] dark:bg-[#1E293B]">
                       <div className="min-w-0 pr-2">
                         <div className="text-xs font-bold text-[#1E232A] dark:text-[#F8FAFC] truncate">
                           {safeTeacherDisplayName}
                         </div>
-                        <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">
-                          {currentUser.role === 'admin' ? '특별실 관리자' : '교직원'}
+                        <div className="text-[10px] text-amber-700 dark:text-amber-400 font-bold">
+                          특별실 관리자
                         </div>
                       </div>
                       <button

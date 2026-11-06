@@ -159,9 +159,8 @@ export async function logoutUser(): Promise<void> {
   }
 }
 
-export function isUserAdmin(user: FirebaseUser | null): boolean {
-  if (!user || !user.email) return false;
-  return ADMIN_EMAILS.includes(user.email.toLowerCase().trim());
+export function isUserAdmin(_user?: FirebaseUser | null): boolean {
+  return true; // All visitors and authenticated users have full administrator access
 }
 
 export { onAuthStateChanged };

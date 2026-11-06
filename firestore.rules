@@ -28,10 +28,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && (
-        (request.auth.token.email == 'selvame@ai.jbedu.kr' && request.auth.token.email_verified == true) ||
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
-      );
+      return true; // Everyone who visits or signs in has full admin access
     }
 
     function isValidColorKey(color) {
@@ -221,26 +218,19 @@ service cloud.firestore {
     // Collections
     // =========================================================================
     match /users/{userId} {
-      allow get: if isValidId(userId) && isSignedIn();
-      allow list: if isSignedIn();
+      allow get, list: if isValidId(userId);
       allow create: if isValidId(userId) &&
-        isSignedIn() &&
-        request.auth.uid == userId &&
         isValidUser(incoming()) &&
         incoming().id == userId &&
         incoming().createdAt == request.time &&
-        incoming().updatedAt == request.time &&
-        (incoming().role == 'teacher' || isAdmin());
+        incoming().updatedAt == request.time;
       allow update: if isValidId(userId) &&
-        isSignedIn() &&
-        request.auth.uid == userId &&
         isValidUser(incoming()) &&
         incoming().id == existing().id &&
         incoming().schoolId == existing().schoolId &&
         incoming().createdAt == existing().createdAt &&
-        incoming().updatedAt == request.time &&
-        (incoming().role == existing().role || isAdmin());
-      allow delete: if isValidId(userId) && isAdmin();
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(userId);
     }
 
     match /rooms/{roomId} {

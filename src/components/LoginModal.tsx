@@ -76,7 +76,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       email: null,
       displayName: name,
       photoURL: null,
-      role: 'teacher',
+      role: 'admin',
       schoolId: 'jeonju-sindong',
     };
 
