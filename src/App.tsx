@@ -560,17 +560,13 @@ export default function App() {
             {/* Google Authentication / User Profile / Admin Mode */}
             {currentUser.uid === 'sindong_admin_default' ? (
               <div className="flex items-center gap-2 pl-2 border-l border-[#E5E9EE] dark:border-[#243048]">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200 shadow-2xs">
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                  <span>전원 관리자 권한 승인</span>
-                </div>
                 <button
                   type="button"
                   onClick={() => {
                     setLoginModalError(null);
                     setLoginModalOpen(true);
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-xs font-bold text-[#1E232A] dark:text-[#F8FAFC] hover:bg-[#F8FAFC] dark:hover:bg-[#2A374F] shadow-2xs transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-xs font-bold text-[#1E232A] dark:text-[#F8FAFC] hover:bg-[#F8FAFC] dark:hover:bg-[#2A374F] shadow-2xs transition-all cursor-pointer"
                   title="Google 계정 로그인 또는 교사 성함 설정"
                 >
                   <User className="w-3.5 h-3.5 text-[#8055E8]" />
