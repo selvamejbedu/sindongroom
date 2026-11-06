@@ -156,7 +156,13 @@ export default function App() {
           setCurrentUser(adminProfile);
           try {
             localStorage.setItem('sindong_user', JSON.stringify(adminProfile));
-            localStorage.setItem('sindong_teacher_name', adminProfile.displayName || '');
+            if (
+              adminProfile.displayName &&
+              !adminProfile.displayName.includes('@') &&
+              !adminProfile.displayName.includes('admin')
+            ) {
+              localStorage.setItem('sindong_teacher_name', adminProfile.displayName);
+            }
           } catch {}
         } catch (err) {
           console.warn('Sync profile warning:', err);
@@ -179,7 +185,6 @@ export default function App() {
           setCurrentUser(fallbackUser);
           try {
             localStorage.setItem('sindong_user', JSON.stringify(fallbackUser));
-            localStorage.setItem('sindong_teacher_name', fallbackUser.displayName || '');
           } catch {}
         }
       } else {
@@ -209,9 +214,15 @@ export default function App() {
       setCurrentUser(adminProfile);
       try {
         localStorage.setItem('sindong_user', JSON.stringify(adminProfile));
-        localStorage.setItem('sindong_teacher_name', adminProfile.displayName || '');
+        if (
+          adminProfile.displayName &&
+          !adminProfile.displayName.includes('@') &&
+          !adminProfile.displayName.includes('admin')
+        ) {
+          localStorage.setItem('sindong_teacher_name', adminProfile.displayName);
+        }
       } catch {}
-      showToast(`${adminProfile.displayName} 관리자님, 환영합니다!`);
+      showToast(`${adminProfile.displayName} 선생님, 환영합니다!`);
     } catch (err) {
       console.error('Google Sign-in failed:', err);
       const parsed = parseAuthError(err);
@@ -231,7 +242,7 @@ export default function App() {
       localStorage.removeItem('sindong_user');
     } catch {}
     setCurrentUser(DEFAULT_VISITOR_ADMIN);
-    showToast('로그아웃되었습니다 (전원 관리자 모드 유지).');
+    showToast('로그아웃되었습니다.');
   };
 
   const safeTeacherDisplayName = useMemo(() => {
@@ -241,7 +252,7 @@ export default function App() {
     if (name && !name.includes('@') && name.toLowerCase() !== emailPrefix && name !== 'admin') {
       return name;
     }
-    return currentUser.role === 'admin' ? '특별실 총괄 관리자' : '신동초 선생님';
+    return '신동초 선생님';
   }, [currentUser]);
 
   // Timetable Navigation & Filters
@@ -498,14 +509,8 @@ export default function App() {
             </div>
           </div>
 
-          {/* Center Info Badge & Search Bar */}
+          {/* Center Search Bar */}
           <div className="flex items-center gap-3 flex-1 max-w-xl mx-2 sm:mx-6 justify-center">
-            {/* Soft pink/red status badge like reference image */}
-            <div className="hidden xl:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#FFF0F5] border border-[#FDE2EB] text-[#D84A78] text-xs sm:text-sm font-semibold shrink-0">
-              <span className="w-2 h-2 rounded-full bg-[#D84A78]" />
-              <span>전주신동초 교직원 특별실 이용 중</span>
-            </div>
-
             {/* Modern pill search bar */}
             <div className="relative w-full max-w-xs sm:max-w-sm">
               <Search className="w-4 h-4 text-[#8A91A0] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -584,21 +589,18 @@ export default function App() {
                     />
                   ) : (
                     <span className="w-5 h-5 rounded-full bg-[#8055E8] text-white flex items-center justify-center text-[10px] font-bold">
-                      {(currentUser.displayName || '관')[0]}
+                      {(currentUser.displayName || '선')[0]}
                     </span>
                   )}
                   <span className="max-w-[110px] truncate">
                     {safeTeacherDisplayName}
-                  </span>
-                  <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
-                    관리자
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={handleLogout}
                   className="p-2 rounded-full border border-[#CBD5E1] dark:border-[#334155] bg-[#F4F6F8] dark:bg-[#1E293B] hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 text-[#64748B] transition-all cursor-pointer shadow-2xs"
-                  title="로그아웃 (기본 관리자 모드로 전환)"
+                  title="로그아웃"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -755,11 +757,7 @@ export default function App() {
                     {safeTeacherDisplayName}
                   </div>
                   <div className="text-[10px] text-[#667085] dark:text-[#94A3B8]">
-                    {currentUser
-                      ? currentUser.role === 'admin'
-                        ? '특별실 총괄 관리자'
-                        : '특별실 통합 관리'
-                      : '클릭하여 로그인하기'}
+                    특별실 통합 관리
                   </div>
                 </div>
               </div>
@@ -881,32 +879,26 @@ export default function App() {
                 {/* Mobile Drawer Auth Footer */}
                 <div className="pt-4 border-t border-[#EEF2F0] dark:border-[#334155]">
                   {currentUser.uid === 'sindong_admin_default' ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-xs font-bold text-amber-900 dark:text-amber-200">
-                        <span>전원 관리자 권한 활성화</span>
-                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          setLoginModalError(null);
-                          setLoginModalOpen(true);
-                        }}
-                        className="w-full py-2.5 px-3 rounded-xl bg-[#8055E8] hover:bg-[#6D42D4] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs cursor-pointer"
-                      >
-                        <User className="w-4 h-4" />
-                        <span>Google 로그인 / 계정 연결</span>
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setLoginModalError(null);
+                        setLoginModalOpen(true);
+                      }}
+                      className="w-full py-2.5 px-3 rounded-xl bg-[#8055E8] hover:bg-[#6D42D4] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>교직원 / Google 로그인</span>
+                    </button>
                   ) : (
                     <div className="flex items-center justify-between p-2 rounded-xl bg-[#F4F6F8] dark:bg-[#1E293B]">
                       <div className="min-w-0 pr-2">
                         <div className="text-xs font-bold text-[#1E232A] dark:text-[#F8FAFC] truncate">
                           {safeTeacherDisplayName}
                         </div>
-                        <div className="text-[10px] text-amber-700 dark:text-amber-400 font-bold">
-                          특별실 관리자
+                        <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">
+                          전주신동초 교직원
                         </div>
                       </div>
                       <button

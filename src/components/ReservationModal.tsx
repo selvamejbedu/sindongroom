@@ -114,24 +114,27 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
       let defaultName = '';
       const savedTeacherName = localStorage.getItem('sindong_teacher_name');
       const emailPrefix = currentUser?.email ? currentUser.email.split('@')[0].toLowerCase() : '';
-      if (savedTeacherName && savedTeacherName.trim()) {
-        const savedClean = savedTeacherName.trim();
-        if (
-          !savedClean.includes('@') &&
-          savedClean.toLowerCase() !== emailPrefix &&
-          !savedClean.includes('admin_') &&
-          savedClean !== 'admin'
-        ) {
-          defaultName = savedClean;
-        }
-      } else if (
-        currentUser?.displayName &&
-        !currentUser.displayName.includes('@') &&
-        currentUser.displayName.toLowerCase() !== emailPrefix &&
-        currentUser.displayName !== '신동초 선생님' &&
-        currentUser.displayName !== '신동초 교직원'
-      ) {
-        defaultName = currentUser.displayName;
+      const isInvalidName = (nameStr: string) => {
+        if (!nameStr) return true;
+        const lower = nameStr.trim().toLowerCase();
+        return (
+          lower.includes('@') ||
+          lower.includes('admin') ||
+          lower.includes('selvame') ||
+          lower.includes('sindong_admin') ||
+          lower.includes('teacher_') ||
+          (emailPrefix && lower === emailPrefix) ||
+          lower === '신동초 선생님' ||
+          lower === '신동초 교직원' ||
+          lower === '전주신동초 교직원' ||
+          lower === '교직원'
+        );
+      };
+
+      if (savedTeacherName && !isInvalidName(savedTeacherName)) {
+        defaultName = savedTeacherName.trim();
+      } else if (currentUser?.displayName && !isInvalidName(currentUser.displayName)) {
+        defaultName = currentUser.displayName.trim();
       }
       setTeacherName(defaultName);
       setRoomId(defaultRoom);

@@ -503,33 +503,13 @@ export const ReservationListView: React.FC<{
     return '선생님';
   }, [currentUser]);
 
-  const isVisitorAdmin = currentUser?.uid === 'sindong_admin_default';
   const subtitle =
     mode === 'my'
-      ? isVisitorAdmin
-        ? '전원 관리자 권한: 전체 등록된 예약 현황을 실시간 확인하고 관리자 권한으로 수정 및 삭제할 수 있습니다.'
-        : `${teacherLabel}의 특별실 예약 현황입니다.`
+      ? `${teacherLabel}의 특별실 예약 현황입니다.`
       : '예약 항목을 체크하여 선택 삭제하거나, 클릭하여 상세 내역 확인 및 수정을 진행합니다.';
 
   return (
     <div className="bg-white rounded-2xl border border-[#E9EBF1] shadow-xs overflow-hidden">
-      {mode === 'my' && isVisitorAdmin && (
-        <div className="px-6 py-3 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 flex items-center justify-between gap-3 text-xs font-semibold text-amber-900">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <span>전원 관리자 권한이 활성화되어 모든 예약의 확인·수정·일괄 삭제가 가능합니다.</span>
-          </div>
-          {onLogin && (
-            <button
-              type="button"
-              onClick={onLogin}
-              className="px-3 py-1 bg-white border border-amber-300 rounded-lg text-amber-900 font-bold hover:bg-amber-100 cursor-pointer shadow-2xs shrink-0"
-            >
-              내 계정 연결하기
-            </button>
-          )}
-        </div>
-      )}
       <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-[#E9EBF1]">
         <div>
           <h2 className="text-base font-bold text-[#252B36]">{title}</h2>
