@@ -110,11 +110,29 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
         activeRooms.find((r) => r.id === initialRoomId)?.id || activeRooms[0]?.id || '';
       const d = initialDate || getTodayStr();
       const p = initialPeriod || 2;
-      const defaultName =
-        currentUser?.displayName ||
-        (currentUser?.email ? currentUser.email.split('@')[0] : '') ||
-        localStorage.getItem('sindong_teacher_name') ||
-        '교직원';
+      // Do not auto-populate user ID or email to protect privacy
+      let defaultName = '';
+      const savedTeacherName = localStorage.getItem('sindong_teacher_name');
+      const emailPrefix = currentUser?.email ? currentUser.email.split('@')[0].toLowerCase() : '';
+      if (savedTeacherName && savedTeacherName.trim()) {
+        const savedClean = savedTeacherName.trim();
+        if (
+          !savedClean.includes('@') &&
+          savedClean.toLowerCase() !== emailPrefix &&
+          !savedClean.includes('admin_') &&
+          savedClean !== 'admin'
+        ) {
+          defaultName = savedClean;
+        }
+      } else if (
+        currentUser?.displayName &&
+        !currentUser.displayName.includes('@') &&
+        currentUser.displayName.toLowerCase() !== emailPrefix &&
+        currentUser.displayName !== '신동초 선생님' &&
+        currentUser.displayName !== '신동초 교직원'
+      ) {
+        defaultName = currentUser.displayName;
+      }
       setTeacherName(defaultName);
       setRoomId(defaultRoom);
       setStartDate(d);
@@ -353,11 +371,6 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                 <div className="text-[#8A91A0] mb-0.5">예약 교사</div>
                 <div className="text-sm font-bold text-[#252B36] truncate">
                   {selectedReservation.userName || '교직원'}
-                  {selectedReservation.userEmail ? (
-                    <div className="text-[11px] font-normal text-gray-500 truncate">
-                      {selectedReservation.userEmail}
-                    </div>
-                  ) : null}
                 </div>
               </div>
             </div>

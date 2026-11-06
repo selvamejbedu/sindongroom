@@ -149,10 +149,17 @@ export default function App() {
           console.warn('Sync profile warning:', err);
           const emailLower = (fbUser.email || '').toLowerCase().trim();
           const isAdmin = ADMIN_EMAILS.includes(emailLower);
+          const emailPrefix = emailLower ? emailLower.split('@')[0] : '';
+          const cleanName =
+            fbUser.displayName &&
+            !fbUser.displayName.includes('@') &&
+            fbUser.displayName.toLowerCase() !== emailPrefix
+              ? fbUser.displayName
+              : (isAdmin ? '특별실 관리자' : '신동초 선생님');
           const fallbackUser: AppUser = {
             uid: fbUser.uid,
             email: fbUser.email,
-            displayName: fbUser.displayName || fbUser.email?.split('@')[0] || '신동초 교직원',
+            displayName: cleanName,
             photoURL: fbUser.photoURL,
             role: isAdmin ? 'admin' : 'teacher',
             schoolId: SCHOOL_ID,
@@ -207,6 +214,16 @@ export default function App() {
     } catch {}
     showToast('로그아웃되었습니다.');
   };
+
+  const safeTeacherDisplayName = useMemo(() => {
+    if (!currentUser) return '전주신동초 교직원';
+    const name = currentUser.displayName?.trim() || '';
+    const emailPrefix = currentUser.email ? currentUser.email.split('@')[0].toLowerCase() : '';
+    if (name && !name.includes('@') && name.toLowerCase() !== emailPrefix && name !== 'admin') {
+      return name;
+    }
+    return currentUser.role === 'admin' ? '특별실 총괄 관리자' : '신동초 선생님';
+  }, [currentUser]);
 
   // Timetable Navigation & Filters
   // ==========================================================================
@@ -523,7 +540,7 @@ export default function App() {
                     </span>
                   )}
                   <span className="max-w-[110px] truncate">
-                    {currentUser.displayName || currentUser.email}
+                    {safeTeacherDisplayName}
                   </span>
                   <span
                     className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md ${
@@ -738,7 +755,7 @@ export default function App() {
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-bold text-[#1E232A] dark:text-[#F8FAFC] truncate">
-                    {currentUser ? currentUser.displayName || currentUser.email : '전주신동초 교직원'}
+                    {safeTeacherDisplayName}
                   </div>
                   <div className="text-[10px] text-[#667085] dark:text-[#94A3B8]">
                     {currentUser
@@ -897,7 +914,7 @@ export default function App() {
                     <div className="flex items-center justify-between p-2 rounded-xl bg-[#F4F6F8] dark:bg-[#1E293B]">
                       <div className="min-w-0 pr-2">
                         <div className="text-xs font-bold text-[#1E232A] dark:text-[#F8FAFC] truncate">
-                          {currentUser.displayName || currentUser.email}
+                          {safeTeacherDisplayName}
                         </div>
                         <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">
                           {currentUser.role === 'admin' ? '특별실 관리자' : '교직원'}

@@ -5,12 +5,10 @@ import {
   Copy,
   ExternalLink,
   LogIn,
-  ShieldCheck,
   User,
   X,
 } from 'lucide-react';
 import {
-  ADMIN_EMAILS,
   FIREBASE_PROJECT_ID,
   parseAuthError,
   signInWithGoogle,
@@ -36,10 +34,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [authError, setAuthError] = useState<AuthErrorInfo | null>(initialError);
   const [copied, setCopied] = useState(false);
 
-  // Quick custom teacher login state
-  const [showCustomTeacher, setShowCustomTeacher] = useState(false);
+  // Quick teacher name state
   const [customName, setCustomName] = useState('');
-  const [customEmail, setCustomEmail] = useState('');
 
   if (!isOpen) return null;
 
@@ -71,36 +67,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     }
   };
 
-  const handleQuickLoginAsAdmin = () => {
-    const adminEmail = ADMIN_EMAILS[0] || 'selvame@ai.jbedu.kr';
-    const adminUser: AppUser = {
-      uid: 'admin_selvame',
-      email: adminEmail,
-      displayName: '전주신동초 관리자 (selvame)',
-      photoURL: null,
-      role: 'admin',
-      schoolId: 'jeonju-sindong',
-    };
-    try {
-      localStorage.setItem('sindong_user', JSON.stringify(adminUser));
-      localStorage.setItem('sindong_teacher_name', adminUser.displayName || '');
-    } catch {}
-    onLoginSuccess(adminUser);
-    onClose();
-  };
-
   const handleQuickLoginCustom = (e: React.FormEvent) => {
     e.preventDefault();
-    const name = customName.trim() || '신동초 교직원';
-    const email = customEmail.trim() || 'teacher@ai.jbedu.kr';
-    const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase().trim());
+    const name = customName.trim() || '신동초 선생님';
 
     const teacherUser: AppUser = {
       uid: `teacher_${Date.now()}`,
-      email,
+      email: null,
       displayName: name,
       photoURL: null,
-      role: isAdmin ? 'admin' : 'teacher',
+      role: 'teacher',
       schoolId: 'jeonju-sindong',
     };
 
@@ -235,81 +211,35 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             </div>
           )}
 
-          {/* Direct Teacher Login (Fast bypass for preview & testing) */}
+          {/* Quick Teacher Sign-in option without revealing any private email */}
           <div className="pt-4 border-t border-[#E2E8F0] dark:border-[#334155] space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-[#64748B] dark:text-[#94A3B8]">
-                ⚡ 즉시 교직원 로그인 (도메인 등록 전 바로 사용)
+                선생님 성함으로 간편 시작
               </span>
-              <button
-                type="button"
-                onClick={() => setShowCustomTeacher(!showCustomTeacher)}
-                className="text-[11px] text-[#8055E8] hover:underline font-semibold"
-              >
-                {showCustomTeacher ? '간편 로그인' : '직접 입력'}
-              </button>
             </div>
-
-            {!showCustomTeacher ? (
-              <div className="grid grid-cols-1 gap-2">
-                <button
-                  type="button"
-                  onClick={handleQuickLoginAsAdmin}
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30 border border-amber-200 dark:border-amber-800/60 hover:border-amber-400 text-left flex items-center justify-between transition-all cursor-pointer group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                    <div>
-                      <div className="text-xs font-bold text-amber-950 dark:text-amber-100">
-                        {ADMIN_EMAILS[0]} (총괄 관리자)
-                      </div>
-                      <div className="text-[10px] text-amber-700/80 dark:text-amber-300">
-                        모든 특별실, 공지사항, 시정표 설정 및 예약 전체 관리 권한
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-xs font-bold text-amber-600 group-hover:translate-x-0.5 transition-transform">
-                    로그인 &rarr;
-                  </span>
-                </button>
+            <form onSubmit={handleQuickLoginCustom} className="p-3.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#CBD5E1] dark:border-[#334155] space-y-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#1E232A] dark:text-[#F8FAFC] mb-1">
+                  선생님 성함
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="예: 5학년 담당 선생님"
+                  className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#475569] rounded-lg focus:outline-none focus:border-[#8055E8]"
+                />
               </div>
-            ) : (
-              <form onSubmit={handleQuickLoginCustom} className="p-3.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#CBD5E1] dark:border-[#334155] space-y-3">
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#1E232A] dark:text-[#F8FAFC] mb-1">
-                    교사 성명
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={customName}
-                    onChange={(e) => setCustomName(e.target.value)}
-                    placeholder="예: 김민수 선생님"
-                    className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#475569] rounded-lg focus:outline-none focus:border-[#8055E8]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#1E232A] dark:text-[#F8FAFC] mb-1">
-                    이메일 주소
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={customEmail}
-                    onChange={(e) => setCustomEmail(e.target.value)}
-                    placeholder="예: selvame@ai.jbedu.kr"
-                    className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#475569] rounded-lg focus:outline-none focus:border-[#8055E8]"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-2 bg-[#8055E8] hover:bg-[#6D42D4] text-white text-xs font-bold rounded-lg transition-colors shadow-2xs cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span>이 정보로 즉시 로그인</span>
-                </button>
-              </form>
-            )}
+              <button
+                type="submit"
+                className="w-full py-2 bg-[#8055E8] hover:bg-[#6D42D4] text-white text-xs font-bold rounded-lg transition-colors shadow-2xs cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>성함으로 바로 이용하기</span>
+              </button>
+            </form>
           </div>
         </div>
       </div>

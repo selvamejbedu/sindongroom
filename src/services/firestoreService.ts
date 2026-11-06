@@ -1366,10 +1366,16 @@ export async function syncUserProfile(user: FirebaseUser): Promise<AppUser> {
   const isAdmin = ADMIN_EMAILS.includes(userEmail);
   const role: 'admin' | 'teacher' = isAdmin ? 'admin' : 'teacher';
 
+  let cleanDisplayName = (user.displayName || '').trim();
+  const emailPrefix = userEmail ? userEmail.split('@')[0].toLowerCase() : '';
+  if (!cleanDisplayName || cleanDisplayName.toLowerCase() === emailPrefix || cleanDisplayName.includes('@')) {
+    cleanDisplayName = isAdmin ? '특별실 관리자' : '신동초 선생님';
+  }
+
   const appUser: AppUser = {
     uid: user.uid,
     email: user.email || null,
-    displayName: user.displayName || user.email?.split('@')[0] || '신동초 선생님',
+    displayName: cleanDisplayName,
     photoURL: user.photoURL || null,
     role,
     schoolId: SCHOOL_ID,

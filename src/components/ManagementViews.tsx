@@ -490,10 +490,20 @@ export const ReservationListView: React.FC<{
       ? '내 예약 모아보기'
       : '전체 특별실 예약 목록';
 
+  const teacherLabel = useMemo(() => {
+    if (!currentUser) return '선생님';
+    const name = currentUser.displayName?.trim() || '';
+    const emailPrefix = currentUser.email ? currentUser.email.split('@')[0].toLowerCase() : '';
+    if (name && !name.includes('@') && name.toLowerCase() !== emailPrefix && name !== 'admin') {
+      return `${name} 선생님`;
+    }
+    return '선생님';
+  }, [currentUser]);
+
   const subtitle =
     mode === 'my'
       ? currentUser
-        ? `${currentUser.displayName || currentUser.email} 선생님의 특별실 예약 현황입니다.`
+        ? `${teacherLabel}의 특별실 예약 현황입니다.`
         : 'Google 계정으로 로그인하여 내가 신청한 특별실 예약을 편리하게 모아보고 관리하세요.'
       : '예약 항목을 체크하여 선택 삭제하거나, 클릭하여 상세 내역 확인 및 수정을 진행합니다.';
 
