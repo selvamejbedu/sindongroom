@@ -34,8 +34,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [authError, setAuthError] = useState<AuthErrorInfo | null>(initialError);
   const [copied, setCopied] = useState(false);
 
-  // Quick teacher name state
-  const [customName, setCustomName] = useState('');
+  // Quick teacher name and grade/class state
+  const [customName, setCustomName] = useState(() => {
+    return localStorage.getItem('sindong_teacher_name') || '';
+  });
+  const [customGradeClass, setCustomGradeClass] = useState(() => {
+    return localStorage.getItem('sindong_class_label') || '';
+  });
 
   if (!isOpen) return null;
 
@@ -56,6 +61,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     try {
       const fbUser = await signInWithGoogle();
       const profile = await syncUserProfile(fbUser);
+      // Attach grade/class label if stored or entered
+      const gradeClass = customGradeClass.trim() || localStorage.getItem('sindong_class_label') || '';
+      if (gradeClass) {
+        profile.defaultClassLabel = gradeClass;
+      }
       onLoginSuccess(profile);
       onClose();
     } catch (err) {
@@ -70,6 +80,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const handleQuickLoginCustom = (e: React.FormEvent) => {
     e.preventDefault();
     const name = customName.trim() || '신동초 선생님';
+    const classLabel = customGradeClass.trim() || '5학년 2반';
 
     const teacherUser: AppUser = {
       uid: `teacher_${Date.now()}`,
@@ -78,11 +89,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       photoURL: null,
       role: 'admin',
       schoolId: 'jeonju-sindong',
+      defaultClassLabel: classLabel,
     };
 
     try {
       localStorage.setItem('sindong_user', JSON.stringify(teacherUser));
       localStorage.setItem('sindong_teacher_name', name);
+      localStorage.setItem('sindong_class_label', classLabel);
     } catch {}
 
     onLoginSuccess(teacherUser);
@@ -219,25 +232,39 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               </span>
             </div>
             <form onSubmit={handleQuickLoginCustom} className="p-3.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#CBD5E1] dark:border-[#334155] space-y-3">
-              <div>
-                <label className="block text-[11px] font-semibold text-[#1E232A] dark:text-[#F8FAFC] mb-1">
-                  선생님 성함
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={customName}
-                  onChange={(e) => setCustomName(e.target.value)}
-                  placeholder="예: 5학년 담당 선생님"
-                  className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#475569] rounded-lg focus:outline-none focus:border-[#8055E8]"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#1E232A] dark:text-[#F8FAFC] mb-1">
+                    선생님 성함
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
+                    placeholder="예: 김민수 선생님"
+                    className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#475569] rounded-lg focus:outline-none focus:border-[#8055E8]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#1E232A] dark:text-[#F8FAFC] mb-1">
+                    담당 학급 (자동 입력)
+                  </label>
+                  <input
+                    type="text"
+                    value={customGradeClass}
+                    onChange={(e) => setCustomGradeClass(e.target.value)}
+                    placeholder="예: 5학년 2반, 과학동아리"
+                    className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#475569] rounded-lg focus:outline-none focus:border-[#8055E8]"
+                  />
+                </div>
               </div>
               <button
                 type="submit"
                 className="w-full py-2 bg-[#8055E8] hover:bg-[#6D42D4] text-white text-xs font-bold rounded-lg transition-colors shadow-2xs cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <LogIn className="w-3.5 h-3.5" />
-                <span>성함으로 바로 이용하기</span>
+                <span>정보 저장 및 사용하기</span>
               </button>
             </form>
           </div>

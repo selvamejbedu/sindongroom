@@ -33,6 +33,7 @@ export interface AppUser {
   photoURL: string | null;
   role: 'admin' | 'teacher';
   schoolId: string;
+  defaultClassLabel?: string;
 }
 
 export interface Reservation {
