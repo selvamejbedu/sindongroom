@@ -505,7 +505,9 @@ export const ReservationListView: React.FC<{
 
   const subtitle =
     mode === 'my'
-      ? `${teacherLabel}의 특별실 예약 현황입니다.`
+      ? (currentUser?.uid === 'sindong_admin_default'
+          ? '구글 로그인으로 연동시 활성화 됩니다.'
+          : `${teacherLabel}의 특별실 예약 현황입니다.`)
       : '예약 항목을 체크하여 선택 삭제하거나, 클릭하여 상세 내역 확인 및 수정을 진행합니다.';
 
   return (
