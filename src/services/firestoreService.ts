@@ -1391,7 +1391,7 @@ export async function syncUserProfile(user: FirebaseUser): Promise<AppUser> {
   let cleanDisplayName = (user.displayName || '').trim();
   const emailPrefix = userEmail ? userEmail.split('@')[0].toLowerCase() : '';
   if (!cleanDisplayName || cleanDisplayName.toLowerCase() === emailPrefix || cleanDisplayName.includes('@')) {
-    cleanDisplayName = '특별실 관리자';
+    cleanDisplayName = localStorage.getItem('sindong_teacher_name') || '신동초 선생님';
   }
 
   let defaultClassLabel = '';
@@ -1416,7 +1416,8 @@ export async function syncUserProfile(user: FirebaseUser): Promise<AppUser> {
         id: user.uid,
         schoolId: SCHOOL_ID,
         email: user.email || '',
-        displayName: appUser.displayName,
+        displayName: cleanDisplayName,
+        customDisplayName: cleanDisplayName,
         defaultClassLabel: defaultClassLabel || '',
         ...(user.photoURL ? { photoURL: user.photoURL } : {}),
         role,
