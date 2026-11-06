@@ -15,7 +15,7 @@ import {
   AuthErrorInfo,
 } from '../firebase';
 import { AppUser } from '../types';
-import { syncUserProfile } from '../services/firestoreService';
+import { syncUserProfile, saveUserProfileInfo } from '../services/firestoreService';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -63,9 +63,29 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       const profile = await syncUserProfile(fbUser);
       // Attach grade/class label if stored or entered
       const gradeClass = customGradeClass.trim() || localStorage.getItem('sindong_class_label') || '';
+      const teacherName = customName.trim() || localStorage.getItem('sindong_teacher_name') || '';
+
       if (gradeClass) {
         profile.defaultClassLabel = gradeClass;
+        try {
+          localStorage.setItem('sindong_class_label', gradeClass);
+        } catch {}
       }
+      if (teacherName && (!profile.displayName || profile.displayName.includes('@') || profile.displayName === '특별실 관리자')) {
+        profile.displayName = teacherName;
+        try {
+          localStorage.setItem('sindong_teacher_name', teacherName);
+        } catch {}
+      }
+
+      // Persist to Firestore user document
+      if (fbUser.uid) {
+        await saveUserProfileInfo(fbUser.uid, {
+          ...(teacherName ? { displayName: teacherName } : {}),
+          ...(gradeClass ? { defaultClassLabel: gradeClass } : {}),
+        });
+      }
+
       onLoginSuccess(profile);
       onClose();
     } catch (err) {

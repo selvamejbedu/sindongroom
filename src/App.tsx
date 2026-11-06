@@ -75,6 +75,7 @@ import {
 } from './services/firestoreService';
 import { ReservationModal } from './components/ReservationModal';
 import { LoginModal } from './components/LoginModal';
+import { UserProfileModal } from './components/UserProfileModal';
 import {
   AnnouncementsView,
   MonthlyCalendarView,
@@ -92,6 +93,7 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [userProfileModalOpen, setUserProfileModalOpen] = useState<boolean>(false);
 
   // Theme State: White (light) mode as default
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -597,7 +599,12 @@ export default function App() {
               </div>
             ) : (
               <div className="flex items-center gap-2 pl-2 border-l border-[#E5E9EE] dark:border-[#243048]">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F4F6F8] dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-xs sm:text-sm font-bold text-[#1E232A] dark:text-[#F8FAFC]">
+                <button
+                  type="button"
+                  onClick={() => setUserProfileModalOpen(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F4F6F8] dark:bg-[#1E293B] hover:bg-[#EEF1F4] dark:hover:bg-[#2A374F] border border-[#CBD5E1] dark:border-[#334155] text-xs sm:text-sm font-bold text-[#1E232A] dark:text-[#F8FAFC] transition-all cursor-pointer shadow-2xs group"
+                  title="프로필 및 학년/반 설정"
+                >
                   {currentUser.photoURL ? (
                     <img
                       src={currentUser.photoURL}
@@ -609,10 +616,12 @@ export default function App() {
                       {(currentUser.displayName || '선')[0]}
                     </span>
                   )}
-                  <span className="max-w-[110px] truncate">
+                  <span className="max-w-[130px] truncate">
                     {safeTeacherDisplayName}
+                    {currentUser.defaultClassLabel ? ` (${currentUser.defaultClassLabel})` : ''}
                   </span>
-                </div>
+                  <Edit3 className="w-3.5 h-3.5 text-[#8055E8] group-hover:scale-110 transition-transform" />
+                </button>
                 <button
                   type="button"
                   onClick={handleLogout}
@@ -748,14 +757,14 @@ export default function App() {
             {!sidebarCollapsed && (
               <div
                 onClick={() => {
-                  if (!currentUser) {
+                  if (currentUser.uid === 'sindong_admin_default') {
                     setLoginModalError(null);
                     setLoginModalOpen(true);
+                  } else {
+                    setUserProfileModalOpen(true);
                   }
                 }}
-                className={`mt-4 p-3 rounded-2xl bg-[#F4F6F8] dark:bg-[#1E293B] border border-[#E5E9EE] dark:border-[#334155] flex items-center gap-3 ${
-                  !currentUser ? 'cursor-pointer hover:border-[#8055E8] transition-colors group' : ''
-                }`}
+                className="mt-4 p-3 rounded-2xl bg-[#F4F6F8] dark:bg-[#1E293B] border border-[#E5E9EE] dark:border-[#334155] hover:border-[#8055E8] flex items-center gap-3 cursor-pointer transition-colors group"
               >
                 {currentUser?.photoURL ? (
                   <img
@@ -772,8 +781,9 @@ export default function App() {
                   <div className="text-xs font-bold text-[#1E232A] dark:text-[#F8FAFC] truncate">
                     {safeTeacherDisplayName}
                   </div>
-                  <div className="text-[10px] text-[#667085] dark:text-[#94A3B8]">
-                    특별실 통합 관리
+                  <div className="text-[10px] text-[#8055E8] font-bold flex items-center gap-1">
+                    <span>{currentUser.defaultClassLabel || '학년/반 설정'}</span>
+                    <Edit3 className="w-3 h-3" />
                   </div>
                 </div>
               </div>
@@ -1406,6 +1416,17 @@ export default function App() {
           showToast(`${user.displayName} 선생님, 환영합니다!`);
         }}
         initialError={loginModalError}
+      />
+
+      {/* Profile & Grade/Class Settings Modal */}
+      <UserProfileModal
+        isOpen={userProfileModalOpen}
+        onClose={() => setUserProfileModalOpen(false)}
+        currentUser={currentUser}
+        onUpdateUser={(updated: AppUser) => {
+          setCurrentUser(updated);
+        }}
+        onShowToast={showToast}
       />
     </div>
   );

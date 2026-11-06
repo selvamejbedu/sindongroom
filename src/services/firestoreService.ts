@@ -1360,6 +1360,28 @@ export async function saveSchoolSettings(settings: SchoolSettings): Promise<void
   }
 }
 
+export async function saveUserProfileInfo(
+  uid: string,
+  data: { displayName?: string; defaultClassLabel?: string }
+): Promise<void> {
+  const userRef = doc(db, 'users', uid);
+  try {
+    const payload: Record<string, unknown> = {
+      updatedAt: serverTimestamp(),
+    };
+    if (data.displayName !== undefined) {
+      payload.displayName = data.displayName;
+      payload.customDisplayName = data.displayName;
+    }
+    if (data.defaultClassLabel !== undefined) {
+      payload.defaultClassLabel = data.defaultClassLabel;
+    }
+    await setDoc(userRef, payload, { merge: true });
+  } catch (err) {
+    console.warn('saveUserProfileInfo notice:', err);
+  }
+}
+
 export async function syncUserProfile(user: FirebaseUser): Promise<AppUser> {
   const userRef = doc(db, 'users', user.uid);
   const userEmail = (user.email || '').toLowerCase().trim();
@@ -1372,6 +1394,11 @@ export async function syncUserProfile(user: FirebaseUser): Promise<AppUser> {
     cleanDisplayName = '특별실 관리자';
   }
 
+  let defaultClassLabel = '';
+  try {
+    defaultClassLabel = localStorage.getItem('sindong_class_label') || '';
+  } catch {}
+
   const appUser: AppUser = {
     uid: user.uid,
     email: user.email || null,
@@ -1379,6 +1406,7 @@ export async function syncUserProfile(user: FirebaseUser): Promise<AppUser> {
     photoURL: user.photoURL || null,
     role,
     schoolId: SCHOOL_ID,
+    defaultClassLabel: defaultClassLabel || undefined,
   };
 
   try {
@@ -1389,14 +1417,37 @@ export async function syncUserProfile(user: FirebaseUser): Promise<AppUser> {
         schoolId: SCHOOL_ID,
         email: user.email || '',
         displayName: appUser.displayName,
+        defaultClassLabel: defaultClassLabel || '',
         ...(user.photoURL ? { photoURL: user.photoURL } : {}),
         role,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
     } else {
+      const data = snap.data();
+      if (data.defaultClassLabel) {
+        appUser.defaultClassLabel = data.defaultClassLabel;
+        try {
+          localStorage.setItem('sindong_class_label', data.defaultClassLabel);
+        } catch {}
+      } else if (defaultClassLabel) {
+        await updateDoc(userRef, {
+          defaultClassLabel,
+          updatedAt: serverTimestamp(),
+        });
+      }
+
+      if (data.customDisplayName || data.displayName) {
+        const savedName = data.customDisplayName || data.displayName;
+        if (savedName && !savedName.includes('@') && savedName !== 'admin') {
+          appUser.displayName = savedName;
+          try {
+            localStorage.setItem('sindong_teacher_name', savedName);
+          } catch {}
+        }
+      }
+
       await updateDoc(userRef, {
-        displayName: appUser.displayName,
         ...(user.photoURL ? { photoURL: user.photoURL } : {}),
         updatedAt: serverTimestamp(),
       });
@@ -1407,3 +1458,4 @@ export async function syncUserProfile(user: FirebaseUser): Promise<AppUser> {
 
   return appUser;
 }
+
