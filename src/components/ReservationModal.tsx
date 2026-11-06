@@ -484,7 +484,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
             >
               {activeRooms.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.name} ({r.floor} · {r.category})
+                  {r.name} ({r.location} · {r.category})
                 </option>
               ))}
             </select>

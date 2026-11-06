@@ -1369,7 +1369,7 @@ export const RoomDirectoryAndManageView: React.FC<{
                 </div>
 
                 <div className="mt-2.5 space-y-1 text-xs text-[#8A91A0]">
-                  <div>위치: <span className="text-[#252B36]">{room.location} ({room.floor})</span></div>
+                  <div>위치: <span className="text-[#252B36]">{room.location}</span></div>
                   <div>정원: <span className="text-[#252B36]">{room.capacity}명</span> · 담당: <span className="text-[#252B36]">{room.managerName}</span></div>
                   {room.equipment && (
                     <div className="truncate">비품: <span className="text-[#252B36]">{room.equipment}</span></div>

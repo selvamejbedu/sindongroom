@@ -1304,7 +1304,7 @@ export default function App() {
                                     <span className="font-bold text-sm text-[#1E232A]">
                                       {room.name}
                                     </span>
-                                    <span className="text-xs text-[#8A91A0]">({room.floor})</span>
+                                    <span className="text-xs text-[#8A91A0]">({room.location})</span>
                                   </div>
                                   <button
                                     type="button"
