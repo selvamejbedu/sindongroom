@@ -234,19 +234,8 @@ service cloud.firestore {
     }
 
     match /rooms/{roomId} {
-      allow get: if isValidId(roomId);
-      allow list: if true;
-      allow create: if isValidId(roomId) &&
-        isValidSpecialRoom(incoming()) &&
-        incoming().id == roomId &&
-        incoming().createdAt == request.time &&
-        incoming().updatedAt == request.time;
-      allow update: if isValidId(roomId) &&
-        isValidSpecialRoom(incoming()) &&
-        incoming().id == existing().id &&
-        incoming().schoolId == existing().schoolId &&
-        incoming().createdAt == existing().createdAt &&
-        incoming().updatedAt == request.time;
+      allow get, list: if true;
+      allow create, update: if true;
       allow delete: if isValidId(roomId);
     }
 
