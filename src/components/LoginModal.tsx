@@ -36,7 +36,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   // Quick teacher name and grade/class state
   const [customName, setCustomName] = useState(() => {
-    return localStorage.getItem('sindong_teacher_name') || '';
+    return localStorage.getItem('sindong_teacher_name') || localStorage.getItem('sindong_user') ? JSON.parse(localStorage.getItem('sindong_user') || '{}').displayName || '' : '';
   });
   const [customGradeClass, setCustomGradeClass] = useState(() => {
     return localStorage.getItem('sindong_class_label') || '';
