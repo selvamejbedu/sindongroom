@@ -35,11 +35,13 @@ import {
 import {
   ADMIN_EMAILS,
   auth,
+  AuthErrorInfo,
   db,
   handleFirestoreError,
   logoutUser,
   onAuthStateChanged,
   OperationType,
+  parseAuthError,
   SCHOOL_ID,
   signInWithGoogle,
 } from './firebase';
@@ -72,6 +74,7 @@ import {
   syncUserProfile,
 } from './services/firestoreService';
 import { ReservationModal } from './components/ReservationModal';
+import { LoginModal } from './components/LoginModal';
 import {
   AnnouncementsView,
   MonthlyCalendarView,
@@ -120,8 +123,17 @@ export default function App() {
   // ==========================================================================
   // Firebase Auth & User State
   // ==========================================================================
-  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('sindong_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [authLoading, setAuthLoading] = useState<boolean>(true);
+  const [loginModalOpen, setLoginModalOpen] = useState<boolean>(false);
+  const [loginModalError, setLoginModalError] = useState<AuthErrorInfo | null>(null);
 
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, async (fbUser) => {
@@ -129,21 +141,34 @@ export default function App() {
         try {
           const profile = await syncUserProfile(fbUser);
           setCurrentUser(profile);
+          try {
+            localStorage.setItem('sindong_user', JSON.stringify(profile));
+            localStorage.setItem('sindong_teacher_name', profile.displayName || '');
+          } catch {}
         } catch (err) {
           console.warn('Sync profile warning:', err);
           const emailLower = (fbUser.email || '').toLowerCase().trim();
           const isAdmin = ADMIN_EMAILS.includes(emailLower);
-          setCurrentUser({
+          const fallbackUser: AppUser = {
             uid: fbUser.uid,
             email: fbUser.email,
             displayName: fbUser.displayName || fbUser.email?.split('@')[0] || '신동초 교직원',
             photoURL: fbUser.photoURL,
             role: isAdmin ? 'admin' : 'teacher',
             schoolId: SCHOOL_ID,
-          });
+          };
+          setCurrentUser(fallbackUser);
+          try {
+            localStorage.setItem('sindong_user', JSON.stringify(fallbackUser));
+            localStorage.setItem('sindong_teacher_name', fallbackUser.displayName || '');
+          } catch {}
         }
       } else {
-        setCurrentUser(null);
+        // If logged out from Firebase and not in manual bypass mode
+        const saved = localStorage.getItem('sindong_user');
+        if (!saved) {
+          setCurrentUser(null);
+        }
       }
       setAuthLoading(false);
     });
@@ -156,21 +181,31 @@ export default function App() {
       const fbUser = await signInWithGoogle();
       const profile = await syncUserProfile(fbUser);
       setCurrentUser(profile);
-      showToast(`${profile.displayName} 선생님, 반갑습니다!`);
+      try {
+        localStorage.setItem('sindong_user', JSON.stringify(profile));
+        localStorage.setItem('sindong_teacher_name', profile.displayName || '');
+      } catch {}
+      showToast(`${profile.displayName} 선생님, 환영합니다!`);
     } catch (err) {
       console.error('Google Sign-in failed:', err);
-      showToast('Google 로그인 중 오류가 발생했습니다.');
+      const parsed = parseAuthError(err);
+      setLoginModalError(parsed);
+      setLoginModalOpen(true);
+      showToast(parsed.friendlyMessage);
     }
   };
 
   const handleLogout = async () => {
     try {
       await logoutUser();
-      setCurrentUser(null);
-      showToast('로그아웃되었습니다.');
     } catch (err) {
-      console.error('Logout failed:', err);
+      console.warn('Logout notice:', err);
     }
+    setCurrentUser(null);
+    try {
+      localStorage.removeItem('sindong_user');
+    } catch {}
+    showToast('로그아웃되었습니다.');
   };
 
   // Timetable Navigation & Filters
@@ -513,7 +548,10 @@ export default function App() {
               <div className="flex items-center gap-2 pl-2 border-l border-[#E5E9EE] dark:border-[#243048]">
                 <button
                   type="button"
-                  onClick={handleGoogleLogin}
+                  onClick={() => {
+                    setLoginModalError(null);
+                    setLoginModalOpen(true);
+                  }}
                   className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-white dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-xs sm:text-sm font-bold text-[#1E232A] dark:text-[#F8FAFC] hover:bg-[#F8FAFC] dark:hover:bg-[#2A374F] shadow-2xs transition-all cursor-pointer"
                 >
                   <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
@@ -534,7 +572,7 @@ export default function App() {
                       d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                     />
                   </svg>
-                  <span>Google 로그인</span>
+                  <span>교직원 / Google 로그인</span>
                 </button>
               </div>
             )}
@@ -676,7 +714,17 @@ export default function App() {
 
             {/* Bottom Profile Box */}
             {!sidebarCollapsed && (
-              <div className="mt-4 p-3 rounded-2xl bg-[#F4F6F8] dark:bg-[#1E293B] border border-[#E5E9EE] dark:border-[#334155] flex items-center gap-3">
+              <div
+                onClick={() => {
+                  if (!currentUser) {
+                    setLoginModalError(null);
+                    setLoginModalOpen(true);
+                  }
+                }}
+                className={`mt-4 p-3 rounded-2xl bg-[#F4F6F8] dark:bg-[#1E293B] border border-[#E5E9EE] dark:border-[#334155] flex items-center gap-3 ${
+                  !currentUser ? 'cursor-pointer hover:border-[#8055E8] transition-colors group' : ''
+                }`}
+              >
                 {currentUser?.photoURL ? (
                   <img
                     src={currentUser.photoURL}
@@ -684,16 +732,20 @@ export default function App() {
                     className="w-8 h-8 rounded-full object-cover shrink-0"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-[#E8DEF8] dark:bg-purple-950 text-[#5B3FB8] dark:text-purple-300 flex items-center justify-center font-bold text-xs shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-[#E8DEF8] dark:bg-purple-950 text-[#5B3FB8] dark:text-purple-300 flex items-center justify-center font-bold text-xs shrink-0 group-hover:scale-105 transition-transform">
                     <User className="w-4 h-4" />
                   </div>
                 )}
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="text-xs font-bold text-[#1E232A] dark:text-[#F8FAFC] truncate">
                     {currentUser ? currentUser.displayName || currentUser.email : '전주신동초 교직원'}
                   </div>
                   <div className="text-[10px] text-[#667085] dark:text-[#94A3B8]">
-                    {currentUser?.role === 'admin' ? '특별실 총괄 관리자' : '특별실 통합 관리'}
+                    {currentUser
+                      ? currentUser.role === 'admin'
+                        ? '특별실 총괄 관리자'
+                        : '특별실 통합 관리'
+                      : '클릭하여 로그인하기'}
                   </div>
                 </div>
               </div>
@@ -825,6 +877,46 @@ export default function App() {
                     />
                   </div>
                 </div>
+
+                {/* Mobile Drawer Auth Footer */}
+                <div className="pt-4 border-t border-[#EEF2F0] dark:border-[#334155]">
+                  {!currentUser ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setLoginModalError(null);
+                        setLoginModalOpen(true);
+                      }}
+                      className="w-full py-2.5 px-3 rounded-xl bg-[#8055E8] hover:bg-[#6D42D4] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>교직원 / Google 로그인</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-[#F4F6F8] dark:bg-[#1E293B]">
+                      <div className="min-w-0 pr-2">
+                        <div className="text-xs font-bold text-[#1E232A] dark:text-[#F8FAFC] truncate">
+                          {currentUser.displayName || currentUser.email}
+                        </div>
+                        <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">
+                          {currentUser.role === 'admin' ? '특별실 관리자' : '교직원'}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleLogout();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 text-xs font-bold"
+                        title="로그아웃"
+                      >
+                        <LogOut className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -866,7 +958,10 @@ export default function App() {
                     : 'all'
                 }
                 currentUser={currentUser}
-                onLogin={handleGoogleLogin}
+                onLogin={() => {
+                  setLoginModalError(null);
+                  setLoginModalOpen(true);
+                }}
                 reservations={reservations}
                 rooms={rooms}
                 periods={periods}
@@ -1285,6 +1380,19 @@ export default function App() {
         periods={periods}
         currentUser={currentUser}
         onSuccessMessage={showToast}
+      />
+
+      {/* ==================================================================== */}
+      {/* Google Login & Quick Teacher Login Modal */}
+      {/* ==================================================================== */}
+      <LoginModal
+        isOpen={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+        onLoginSuccess={(user) => {
+          setCurrentUser(user);
+          showToast(`${user.displayName} 선생님, 환영합니다!`);
+        }}
+        initialError={loginModalError}
       />
     </div>
   );

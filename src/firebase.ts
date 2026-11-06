@@ -84,6 +84,62 @@ export async function testConnection(): Promise<void> {
 
 testConnection();
 
+export const FIREBASE_PROJECT_ID = firebaseConfig.projectId;
+
+export interface AuthErrorInfo {
+  code: string;
+  message: string;
+  friendlyMessage: string;
+  isDomainError: boolean;
+  isPopupBlocked: boolean;
+  isCancelled: boolean;
+}
+
+export function parseAuthError(error: unknown): AuthErrorInfo {
+  const err = error as { code?: string; message?: string } | null;
+  const code = err?.code || 'auth/unknown';
+  const message = err?.message || String(error);
+
+  let friendlyMessage = 'Google 로그인 처리 중 문제가 발생했습니다.';
+  let isDomainError = false;
+  let isPopupBlocked = false;
+  let isCancelled = false;
+
+  switch (code) {
+    case 'auth/unauthorized-domain':
+      isDomainError = true;
+      friendlyMessage =
+        '현재 웹사이트 도메인이 Firebase Authentication 승인 도메인(Authorized Domains)에 등록되지 않았습니다.';
+      break;
+    case 'auth/popup-blocked':
+      isPopupBlocked = true;
+      friendlyMessage = '브라우저 팝업이 차단되었습니다. 팝업 차단을 해제해 주세요.';
+      break;
+    case 'auth/popup-closed-by-user':
+    case 'auth/cancelled-popup-request':
+      isCancelled = true;
+      friendlyMessage = '로그인 창이 닫혔거나 취소되었습니다.';
+      break;
+    case 'auth/operation-not-allowed':
+      friendlyMessage = 'Firebase 콘솔에서 Google 로그인 제공업체가 활성화되지 않았습니다.';
+      break;
+    case 'auth/network-request-failed':
+      friendlyMessage = '네트워크 연결이 불안정합니다. 네트워크 상태를 확인해 주세요.';
+      break;
+    default:
+      friendlyMessage = `로그인 오류가 발생했습니다 (${code}).`;
+  }
+
+  return {
+    code,
+    message,
+    friendlyMessage,
+    isDomainError,
+    isPopupBlocked,
+    isCancelled,
+  };
+}
+
 export async function signInWithGoogle(): Promise<FirebaseUser> {
   try {
     const result = await signInWithPopup(auth, googleProvider);
