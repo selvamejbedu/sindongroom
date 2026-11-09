@@ -7,7 +7,9 @@ import {
 import {
   AlertCircle,
   Building2,
+  Calendar,
   CalendarDays,
+  CalendarRange,
   Check,
   CheckCircle2,
   ChevronLeft,
@@ -81,6 +83,7 @@ import {
   MonthlyCalendarView,
   ReservationListView,
   RoomDirectoryAndManageView,
+  SemesterCalendarView,
   SystemSettingsView,
 } from './components/ManagementViews';
 
@@ -385,10 +388,7 @@ export default function App() {
   const auditLogs: AuditLog[] = liveAuditLogs;
 
   const myReservationCount = useMemo(() => {
-    if (!currentUser) return 0;
-    if (currentUser.uid === 'sindong_admin_default') {
-      return reservations.filter((r) => r.status === 'confirmed').length;
-    }
+    if (!currentUser || currentUser.uid === 'sindong_admin_default' || !currentUser.email) return 0;
     return reservations.filter(
       (r) =>
         r.status === 'confirmed' &&
@@ -676,7 +676,33 @@ export default function App() {
                   label="홈 대시보드"
                   active={activeNav === 'dashboard'}
                   collapsed={sidebarCollapsed}
-                  onClick={() => setActiveNav('dashboard')}
+                  onClick={() => {
+                    setSelectedRoomFilter('all');
+                    setCalendarViewMode('day');
+                    setActiveNav('dashboard');
+                  }}
+                />
+                <SidebarItem
+                  icon={<Calendar className="w-4.5 h-4.5" />}
+                  label="일간 예약 달력"
+                  active={activeNav === 'daily-calendar'}
+                  collapsed={sidebarCollapsed}
+                  onClick={() => {
+                    setSelectedRoomFilter('all');
+                    setCalendarViewMode('day');
+                    setActiveNav('daily-calendar');
+                  }}
+                />
+                <SidebarItem
+                  icon={<CalendarRange className="w-4.5 h-4.5" />}
+                  label="주간 예약 달력"
+                  active={activeNav === 'weekly-calendar'}
+                  collapsed={sidebarCollapsed}
+                  onClick={() => {
+                    setSelectedRoomFilter('all');
+                    setCalendarViewMode('week');
+                    setActiveNav('weekly-calendar');
+                  }}
                 />
                 <SidebarItem
                   icon={<CalendarDays className="w-4.5 h-4.5" />}
@@ -686,6 +712,16 @@ export default function App() {
                   onClick={() => {
                     setSelectedRoomFilter('all');
                     setActiveNav('calendar');
+                  }}
+                />
+                <SidebarItem
+                  icon={<CalendarDays className="w-4.5 h-4.5" />}
+                  label="학기별 예약 달력"
+                  active={activeNav === 'semester-calendar'}
+                  collapsed={sidebarCollapsed}
+                  onClick={() => {
+                    setSelectedRoomFilter('all');
+                    setActiveNav('semester-calendar');
                   }}
                 />
               </div>
@@ -827,7 +863,31 @@ export default function App() {
                       label="홈 대시보드"
                       active={activeNav === 'dashboard'}
                       onClick={() => {
+                        setSelectedRoomFilter('all');
+                        setCalendarViewMode('day');
                         setActiveNav('dashboard');
+                        setMobileMenuOpen(false);
+                      }}
+                    />
+                    <SidebarItem
+                      icon={<Calendar className="w-4 h-4" />}
+                      label="일간 예약 달력"
+                      active={activeNav === 'daily-calendar'}
+                      onClick={() => {
+                        setSelectedRoomFilter('all');
+                        setCalendarViewMode('day');
+                        setActiveNav('daily-calendar');
+                        setMobileMenuOpen(false);
+                      }}
+                    />
+                    <SidebarItem
+                      icon={<CalendarRange className="w-4 h-4" />}
+                      label="주간 예약 달력"
+                      active={activeNav === 'weekly-calendar'}
+                      onClick={() => {
+                        setSelectedRoomFilter('all');
+                        setCalendarViewMode('week');
+                        setActiveNav('weekly-calendar');
                         setMobileMenuOpen(false);
                       }}
                     />
@@ -838,6 +898,16 @@ export default function App() {
                       onClick={() => {
                         setSelectedRoomFilter('all');
                         setActiveNav('calendar');
+                        setMobileMenuOpen(false);
+                      }}
+                    />
+                    <SidebarItem
+                      icon={<CalendarDays className="w-4 h-4" />}
+                      label="학기별 예약 달력"
+                      active={activeNav === 'semester-calendar'}
+                      onClick={() => {
+                        setSelectedRoomFilter('all');
+                        setActiveNav('semester-calendar');
                         setMobileMenuOpen(false);
                       }}
                     />
@@ -954,15 +1024,51 @@ export default function App() {
                 referenceDate={referenceDate}
                 onSelectDateToTimetable={(d) => {
                   setReferenceDate(d);
-                  setActiveNav('dashboard');
+                  setCalendarViewMode('day');
+                  setActiveNav('daily-calendar');
                 }}
                 reservations={reservations}
                 rooms={rooms}
                 selectedRoomFilter={selectedRoomFilter}
                 onChangeRoomFilter={setSelectedRoomFilter}
                 onSwitchViewMode={(mode) => {
-                  setCalendarViewMode(mode);
-                  setActiveNav('dashboard');
+                  if (mode === 'semester') {
+                    setActiveNav('semester-calendar');
+                  } else if (mode === 'week') {
+                    setCalendarViewMode('week');
+                    setActiveNav('weekly-calendar');
+                  } else {
+                    setCalendarViewMode('day');
+                    setActiveNav('daily-calendar');
+                  }
+                }}
+                periods={periods}
+                onClickReservation={handleOpenDetailModal}
+              />
+            )}
+
+            {activeNav === 'semester-calendar' && (
+              <SemesterCalendarView
+                referenceDate={referenceDate}
+                onSelectDateToTimetable={(d) => {
+                  setReferenceDate(d);
+                  setCalendarViewMode('day');
+                  setActiveNav('daily-calendar');
+                }}
+                reservations={reservations}
+                rooms={rooms}
+                selectedRoomFilter={selectedRoomFilter}
+                onChangeRoomFilter={setSelectedRoomFilter}
+                onSwitchViewMode={(mode) => {
+                  if (mode === 'month') {
+                    setActiveNav('calendar');
+                  } else if (mode === 'week') {
+                    setCalendarViewMode('week');
+                    setActiveNav('weekly-calendar');
+                  } else {
+                    setCalendarViewMode('day');
+                    setActiveNav('daily-calendar');
+                  }
                 }}
                 periods={periods}
                 onClickReservation={handleOpenDetailModal}
@@ -1024,7 +1130,10 @@ export default function App() {
             )}
 
             {/* Dashboard & Timetable (Primary Screen matching the reference design layout) */}
-            {(activeNav === 'dashboard' || activeNav === 'timetable') && (
+            {(activeNav === 'dashboard' ||
+              activeNav === 'timetable' ||
+              activeNav === 'daily-calendar' ||
+              activeNav === 'weekly-calendar') && (
               <div className="w-full space-y-4">
                 {/* Timetable Date Navigator Header */}
                     <div className="p-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#F8FAFC] to-[#FFFFFF] border border-[#CBD5E1] dark:border-[#243048] flex flex-wrap items-center justify-between gap-3 shadow-2xs">
@@ -1066,13 +1175,14 @@ export default function App() {
                         </div>
                       </div>
 
-                       {/* Day vs Week vs Month view toggle */}
+                       {/* Day vs Week vs Month vs Semester view toggle */}
                       <div className="flex items-center p-0.5 bg-[#F4F6F8] dark:bg-[#161F32] border border-[#CBD5E1] dark:border-[#243048] rounded-full text-xs font-bold">
                         <button
                           type="button"
                           onClick={() => {
                             setSelectedRoomFilter('all');
                             setCalendarViewMode('day');
+                            if (activeNav === 'weekly-calendar') setActiveNav('daily-calendar');
                           }}
                           className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
                             calendarViewMode === 'day'
@@ -1087,6 +1197,7 @@ export default function App() {
                           onClick={() => {
                             setSelectedRoomFilter('all');
                             setCalendarViewMode('week');
+                            if (activeNav === 'daily-calendar') setActiveNav('weekly-calendar');
                           }}
                           className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
                             calendarViewMode === 'week'
@@ -1105,6 +1216,16 @@ export default function App() {
                           className="px-3 py-1 rounded-full text-[#667085] dark:text-[#94A3B8] hover:text-[#1E232A] dark:hover:text-white transition-all cursor-pointer border border-transparent"
                         >
                           월간 보기
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedRoomFilter('all');
+                            setActiveNav('semester-calendar');
+                          }}
+                          className="px-3 py-1 rounded-full text-[#667085] dark:text-[#94A3B8] hover:text-[#1E232A] dark:hover:text-white transition-all cursor-pointer border border-transparent"
+                        >
+                          학기별 보기
                         </button>
                       </div>
                     </div>

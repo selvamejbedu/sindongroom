@@ -55,7 +55,7 @@ export const MonthlyCalendarView: React.FC<{
   rooms?: SpecialRoom[];
   selectedRoomFilter?: string;
   onChangeRoomFilter?: (roomId: string) => void;
-  onSwitchViewMode?: (mode: 'day' | 'week') => void;
+  onSwitchViewMode?: (mode: 'day' | 'week' | 'semester') => void;
   periods?: PeriodInfo[];
   onClickReservation: (r: Reservation) => void;
 }> = ({
@@ -167,6 +167,13 @@ export const MonthlyCalendarView: React.FC<{
                 className="px-3 py-1 rounded-full bg-white dark:bg-[#2563EB] text-[#1E232A] dark:text-white shadow-xs border border-[#CBD5E1] dark:border-transparent cursor-pointer"
               >
                 월간 보기
+              </button>
+              <button
+                type="button"
+                onClick={() => onSwitchViewMode('semester')}
+                className="px-3 py-1 rounded-full text-[#667085] dark:text-[#94A3B8] hover:text-[#1E232A] dark:hover:text-white transition-all cursor-pointer border border-transparent"
+              >
+                학기별 보기
               </button>
             </div>
           )}
@@ -314,6 +321,392 @@ export const MonthlyCalendarView: React.FC<{
 };
 
 // ============================================================================
+// 1-1. Semester Calendar View (학기별 예약 달력 - 1학기: 3~7월 / 2학기: 8~1월)
+// ============================================================================
+export const SemesterCalendarView: React.FC<{
+  referenceDate: string;
+  onSelectDateToTimetable: (dateStr: string) => void;
+  reservations: Reservation[];
+  rooms?: SpecialRoom[];
+  selectedRoomFilter?: string;
+  onChangeRoomFilter?: (roomId: string) => void;
+  onSwitchViewMode?: (mode: 'day' | 'week' | 'month') => void;
+  periods?: PeriodInfo[];
+  onClickReservation: (r: Reservation) => void;
+}> = ({
+  referenceDate,
+  onSelectDateToTimetable,
+  reservations,
+  rooms = [],
+  selectedRoomFilter = 'all',
+  onChangeRoomFilter,
+  onSwitchViewMode,
+  periods,
+  onClickReservation,
+}) => {
+  const initialParts = referenceDate.split('-').map(Number);
+  const refYear = initialParts[0] || 2026;
+  const refMonth = initialParts[1] || 3;
+
+  // Determine school year and semester:
+  // If month is 1 or 2, school year is refYear - 1 (2nd semester: 8~1월, 2월)
+  // 1학기: 3월 ~ 7월
+  // 2학기: 8월 ~ 다음해 1월
+  const defaultSchoolYear = refMonth === 1 || refMonth === 2 ? refYear - 1 : refYear;
+  const defaultSemester: 1 | 2 = refMonth >= 3 && refMonth <= 7 ? 1 : 2;
+
+  const [schoolYear, setSchoolYear] = useState<number>(defaultSchoolYear);
+  const [semester, setSemester] = useState<1 | 2>(defaultSemester);
+  const [internalRoomFilter, setInternalRoomFilter] = useState<string>('all');
+
+  const activeRoomFilter = onChangeRoomFilter ? selectedRoomFilter : internalRoomFilter;
+  const setRoomFilter = (val: string) => {
+    if (onChangeRoomFilter) {
+      onChangeRoomFilter(val);
+    } else {
+      setInternalRoomFilter(val);
+    }
+  };
+
+  // 1학기: 3월 ~ 7월 (5개월)
+  // 2학기: 8월 ~ 다음해 1월 (6개월)
+  const semesterMonths = useMemo(() => {
+    if (semester === 1) {
+      return [
+        { year: schoolYear, month: 3, label: `${schoolYear}년 3월` },
+        { year: schoolYear, month: 4, label: `${schoolYear}년 4월` },
+        { year: schoolYear, month: 5, label: `${schoolYear}년 5월` },
+        { year: schoolYear, month: 6, label: `${schoolYear}년 6월` },
+        { year: schoolYear, month: 7, label: `${schoolYear}년 7월` },
+      ];
+    } else {
+      return [
+        { year: schoolYear, month: 8, label: `${schoolYear}년 8월` },
+        { year: schoolYear, month: 9, label: `${schoolYear}년 9월` },
+        { year: schoolYear, month: 10, label: `${schoolYear}년 10월` },
+        { year: schoolYear, month: 11, label: `${schoolYear}년 11월` },
+        { year: schoolYear, month: 12, label: `${schoolYear}년 12월` },
+        { year: schoolYear + 1, month: 1, label: `${schoolYear + 1}년 1월` },
+      ];
+    }
+  }, [schoolYear, semester]);
+
+  const activeRooms = useMemo(() => rooms.filter((r) => r.active), [rooms]);
+
+  return (
+    <div className="bg-white dark:bg-[#111827] rounded-2xl border border-[#CBD5E1] dark:border-[#243048] shadow-xs overflow-hidden space-y-4">
+      {/* Top Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-[#CBD5E1] dark:border-[#243048]">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#8055E8]" />
+            <h2 className="text-base font-bold text-[#252B36] dark:text-[#F8FAFC]">
+              {schoolYear}학년도 {semester}학기 특별실 예약 달력
+            </h2>
+          </div>
+          <p className="text-xs text-[#8A91A0] dark:text-[#94A3B8] mt-0.5">
+            {semester === 1
+              ? '1학기(3월~7월) 전체 일정을 한눈에 확인하고 원하는 일자의 특별실 시간표로 바로 이동합니다.'
+              : '2학기(8월~1월) 전체 일정을 한눈에 확인하고 원하는 일자의 특별실 시간표로 바로 이동합니다.'}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Semester Selector Pill (1학기 vs 2학기) */}
+          <div className="flex items-center p-1 bg-[#F1F4F9] dark:bg-[#1A2234] border border-[#CBD5E1] dark:border-[#2E3E5B] rounded-2xl text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => setSemester(1)}
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                semester === 1
+                  ? 'bg-[#8055E8] text-white shadow-xs font-extrabold'
+                  : 'text-[#475467] dark:text-[#94A3B8] hover:text-[#1E232A] dark:hover:text-white'
+              }`}
+            >
+              1학기 (3월~7월)
+            </button>
+            <button
+              type="button"
+              onClick={() => setSemester(2)}
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                semester === 2
+                  ? 'bg-[#8055E8] text-white shadow-xs font-extrabold'
+                  : 'text-[#475467] dark:text-[#94A3B8] hover:text-[#1E232A] dark:hover:text-white'
+              }`}
+            >
+              2학기 (8월~1월)
+            </button>
+          </div>
+
+          {/* School Year Controls */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setSchoolYear((y) => y - 1)}
+              className="p-1.5 rounded-xl border border-[#CBD5E1] dark:border-[#2E3E5B] hover:bg-[#F7F8FC] dark:hover:bg-[#1A2234] text-[#252B36] dark:text-[#F8FAFC] transition-colors cursor-pointer"
+              title="이전 학년도"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="px-2 text-xs font-bold text-[#252B36] dark:text-[#F8FAFC] tabular-nums">
+              {schoolYear}학년도
+            </span>
+            <button
+              type="button"
+              onClick={() => setSchoolYear((y) => y + 1)}
+              className="p-1.5 rounded-xl border border-[#CBD5E1] dark:border-[#2E3E5B] hover:bg-[#F7F8FC] dark:hover:bg-[#1A2234] text-[#252B36] dark:text-[#F8FAFC] transition-colors cursor-pointer"
+              title="다음 학년도"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* View Mode Switcher */}
+          {onSwitchViewMode && (
+            <div className="flex items-center p-0.5 bg-[#F4F6F8] dark:bg-[#161F32] border border-[#CBD5E1] dark:border-[#243048] rounded-full text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => onSwitchViewMode('day')}
+                className="px-3 py-1 rounded-full text-[#667085] dark:text-[#94A3B8] hover:text-[#1E232A] dark:hover:text-white transition-all cursor-pointer border border-transparent"
+              >
+                일간 보기
+              </button>
+              <button
+                type="button"
+                onClick={() => onSwitchViewMode('week')}
+                className="px-3 py-1 rounded-full text-[#667085] dark:text-[#94A3B8] hover:text-[#1E232A] dark:hover:text-white transition-all cursor-pointer border border-transparent"
+              >
+                주간 보기
+              </button>
+              <button
+                type="button"
+                onClick={() => onSwitchViewMode('month')}
+                className="px-3 py-1 rounded-full text-[#667085] dark:text-[#94A3B8] hover:text-[#1E232A] dark:hover:text-white transition-all cursor-pointer border border-transparent"
+              >
+                월간 보기
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1 rounded-full bg-white dark:bg-[#2563EB] text-[#1E232A] dark:text-white shadow-xs border border-[#CBD5E1] dark:border-transparent cursor-pointer"
+              >
+                학기별 보기
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Special Room Filter Bar */}
+      {activeRooms.length > 0 && (
+        <div className="px-6 py-2.5 bg-[#F8FAFC] dark:bg-[#111827] border-b border-[#E9EBF1] dark:border-[#243048] flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs font-bold text-[#475467] dark:text-[#94A3B8] mr-1.5">
+              특별실 필터:
+            </span>
+            <button
+              type="button"
+              onClick={() => setRoomFilter('all')}
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeRoomFilter === 'all'
+                  ? 'bg-[#1E232A] text-white shadow-xs border border-[#1E232A] dark:bg-[#2563EB] dark:border-[#2563EB]'
+                  : 'bg-white dark:bg-[#1A2234] border border-[#CBD5E1] dark:border-[#2E3E5B] text-[#475467] dark:text-[#94A3B8] hover:bg-gray-100 dark:hover:bg-[#222D42]'
+              }`}
+            >
+              전체보기
+            </button>
+            {activeRooms.map((room) => {
+              const c = ROOM_COLOR_PALETTE[room.colorKey] || ROOM_COLOR_PALETTE.purple;
+              const isSelected = activeRoomFilter === room.id;
+              return (
+                <button
+                  key={room.id}
+                  type="button"
+                  onClick={() => setRoomFilter(room.id)}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    isSelected
+                      ? `${c.bg} ${c.border} ${c.text} shadow-xs font-extrabold border-2`
+                      : 'bg-white dark:bg-[#1A2234] border border-[#CBD5E1] dark:border-[#2E3E5B] text-[#475467] dark:text-[#94A3B8] hover:bg-gray-50 dark:hover:bg-[#222D42]'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${c.badgeBg}`} />
+                  {room.name}
+                </button>
+              );
+            })}
+          </div>
+
+          {activeRoomFilter !== 'all' && (
+            <button
+              type="button"
+              onClick={() => setRoomFilter('all')}
+              className="text-xs font-semibold text-[#667085] hover:text-[#1E232A] underline cursor-pointer"
+            >
+              전체보기로 초기화
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Grid of Months for the Semester */}
+      <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {semesterMonths.map((mObj) => (
+          <SemesterMonthBlock
+            key={`${mObj.year}-${mObj.month}`}
+            year={mObj.year}
+            month={mObj.month}
+            title={mObj.label}
+            reservations={reservations}
+            activeRoomFilter={activeRoomFilter}
+            periods={periods}
+            onSelectDateToTimetable={onSelectDateToTimetable}
+            onClickReservation={onClickReservation}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Sub-component: A single month block inside Semester Calendar
+const SemesterMonthBlock: React.FC<{
+  year: number;
+  month: number;
+  title: string;
+  reservations: Reservation[];
+  activeRoomFilter: string;
+  periods?: PeriodInfo[];
+  onSelectDateToTimetable: (dateStr: string) => void;
+  onClickReservation: (r: Reservation) => void;
+}> = ({
+  year,
+  month,
+  title,
+  reservations,
+  activeRoomFilter,
+  periods,
+  onSelectDateToTimetable,
+  onClickReservation,
+}) => {
+  const cells = useMemo(() => getMonthCalendarGrid(year, month), [year, month]);
+
+  const monthTotalCount = useMemo(() => {
+    return reservations.filter((r) => {
+      if (r.status !== 'confirmed') return false;
+      if (activeRoomFilter !== 'all' && r.roomId !== activeRoomFilter) return false;
+      const parts = r.date.split('-').map(Number);
+      return parts[0] === year && parts[1] === month;
+    }).length;
+  }, [reservations, activeRoomFilter, year, month]);
+
+  return (
+    <div className="bg-[#FAFBFD] dark:bg-[#161F32] rounded-2xl border border-[#CBD5E1] dark:border-[#243048] p-4 flex flex-col shadow-2xs">
+      {/* Month Card Title */}
+      <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0] dark:border-[#243048] mb-2">
+        <h3 className="text-sm font-extrabold text-[#1E232A] dark:text-[#F8FAFC] tracking-tight">
+          {title}
+        </h3>
+        <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#8055E8]/10 text-[#8055E8] dark:text-purple-300">
+          총 {monthTotalCount}건 예약
+        </span>
+      </div>
+
+      {/* Weekday Header */}
+      <div className="grid grid-cols-7 border-b border-[#E2E8F0] dark:border-[#243048] pb-1.5 mb-1 text-center text-[11px] font-semibold">
+        {KOR_WEEKDAYS.map((day, idx) => (
+          <div
+            key={day}
+            className={
+              idx === 0
+                ? 'text-red-500'
+                : idx === 6
+                ? 'text-blue-500'
+                : 'text-[#8A91A0] dark:text-[#94A3B8]'
+            }
+          >
+            {day}
+          </div>
+        ))}
+      </div>
+
+      {/* Grid of days */}
+      <div className="grid grid-cols-7 gap-1 flex-1">
+        {cells.map((cell) => {
+          const dayRes = cell.isCurrentMonth
+            ? reservations.filter(
+                (r) =>
+                  r.status === 'confirmed' &&
+                  r.date === cell.date &&
+                  (activeRoomFilter === 'all' || r.roomId === activeRoomFilter)
+              )
+            : [];
+
+          return (
+            <div
+              key={cell.date}
+              onClick={() => {
+                if (cell.isCurrentMonth) {
+                  onSelectDateToTimetable(cell.date);
+                }
+              }}
+              className={`min-h-[64px] p-1 rounded-xl border flex flex-col transition-all ${
+                !cell.isCurrentMonth
+                  ? 'opacity-20 border-transparent bg-transparent pointer-events-none'
+                  : 'bg-white dark:bg-[#111827] border-[#E5E9EE] dark:border-[#2A374F] hover:border-[#8055E8] hover:shadow-xs cursor-pointer'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-[11px] font-bold tabular-nums px-1 rounded ${
+                    cell.isToday
+                      ? 'bg-[#8055E8] text-white'
+                      : cell.isWeekend
+                      ? 'text-[#8A91A0]'
+                      : 'text-[#1E232A] dark:text-[#F8FAFC]'
+                  }`}
+                >
+                  {cell.dayNumber}
+                </span>
+                {dayRes.length > 0 && (
+                  <span className="text-[10px] font-extrabold text-[#8055E8] dark:text-purple-300 tabular-nums">
+                    {dayRes.length}
+                  </span>
+                )}
+              </div>
+
+              {/* Badges preview */}
+              <div className="mt-1 space-y-0.5 overflow-hidden flex-1">
+                {dayRes.slice(0, 2).map((r) => {
+                  const c = ROOM_COLOR_PALETTE[r.roomColor] || ROOM_COLOR_PALETTE.purple;
+                  const pLabel = formatPeriodRangeLabel(r.startPeriod, r.endPeriod, periods, false);
+                  return (
+                    <div
+                      key={r.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onClickReservation(r);
+                      }}
+                      title={`${r.roomName} · ${pLabel} (${r.classLabel})`}
+                      className={`px-1 py-0.5 rounded text-[9px] font-bold leading-tight truncate border ${c.bg} ${c.border} ${c.text}`}
+                    >
+                      {r.roomName}
+                    </div>
+                  );
+                })}
+                {dayRes.length > 2 && (
+                  <div className="text-[9px] text-[#8A91A0] pl-0.5 font-bold">
+                    +{dayRes.length - 2}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
 // 2. Reservation List View (전체 예약 목록 / 반복 예약)
 // ============================================================================
 export const ReservationListView: React.FC<{
@@ -362,15 +755,15 @@ export const ReservationListView: React.FC<{
       .filter((r) => {
         if (mode === 'recurring' && !r.seriesId && !r.recurrenceSummary) return false;
         if (mode === 'my') {
-          if (!currentUser) return false;
-          const isVisitorAdmin = currentUser.uid === 'sindong_admin_default';
-          if (!isVisitorAdmin) {
-            const isMine =
-              (r.userId && r.userId === currentUser.uid) ||
-              (r.userEmail && r.userEmail.toLowerCase() === (currentUser.email || '').toLowerCase()) ||
-              (r.userName && currentUser.displayName && r.userName.trim() === currentUser.displayName.trim());
-            if (!isMine) return false;
+          // '내 예약 모아보기'는 Google 로그인된 사용자의 본인 예약만 노출
+          if (!currentUser || currentUser.uid === 'sindong_admin_default' || !currentUser.email) {
+            return false;
           }
+          const isMine =
+            (r.userId && r.userId === currentUser.uid) ||
+            (r.userEmail && r.userEmail.toLowerCase() === (currentUser.email || '').toLowerCase()) ||
+            (r.userName && currentUser.displayName && r.userName.trim() === currentUser.displayName.trim());
+          if (!isMine) return false;
         }
         if (selectedRoomFilter !== 'all' && r.roomId !== selectedRoomFilter) return false;
         if (statusFilter !== 'all' && r.status !== statusFilter) return false;
@@ -663,7 +1056,24 @@ export const ReservationListView: React.FC<{
             {filtered.length === 0 ? (
               <tr>
                 <td colSpan={8} className="py-12 text-center text-[#8A91A0] dark:text-[#94A3B8]">
-                  조건에 해당하는 특별실 예약 내역이 없습니다.
+                  {mode === 'my' && (!currentUser || currentUser.uid === 'sindong_admin_default' || !currentUser.email) ? (
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <p className="text-sm font-semibold text-[#475467] dark:text-[#CBD5E1]">
+                        구글 로그인으로 연동 시 나의 예약 목록이 자동으로 활성화됩니다.
+                      </p>
+                      {onLogin && (
+                        <button
+                          type="button"
+                          onClick={onLogin}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#8055E8] hover:bg-[#6D42D4] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                        >
+                          Google 로그인하기
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    '조건에 해당하는 특별실 예약 내역이 없습니다.'
+                  )}
                 </td>
               </tr>
             ) : (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   AlertTriangle,
   Check,
@@ -36,11 +36,45 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   // Quick teacher name and grade/class state
   const [customName, setCustomName] = useState(() => {
-    return localStorage.getItem('sindong_teacher_name') || localStorage.getItem('sindong_user') ? JSON.parse(localStorage.getItem('sindong_user') || '{}').displayName || '' : '';
+    try {
+      const savedUser = localStorage.getItem('sindong_user');
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.displayName && !parsed.displayName.includes('@') && parsed.displayName !== 'admin') {
+          return parsed.displayName;
+        }
+      }
+    } catch {}
+    return localStorage.getItem('sindong_teacher_name') || '';
   });
   const [customGradeClass, setCustomGradeClass] = useState(() => {
     return localStorage.getItem('sindong_class_label') || '';
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        const savedUser = localStorage.getItem('sindong_user');
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser);
+          if (parsed.displayName && !parsed.displayName.includes('@') && parsed.displayName !== 'admin') {
+            setCustomName(parsed.displayName);
+          }
+          if (parsed.defaultClassLabel) {
+            setCustomGradeClass(parsed.defaultClassLabel);
+          }
+        }
+      } catch {}
+      const savedName = localStorage.getItem('sindong_teacher_name');
+      if (savedName && !savedName.includes('@')) {
+        setCustomName(savedName);
+      }
+      const savedClass = localStorage.getItem('sindong_class_label');
+      if (savedClass) {
+        setCustomGradeClass(savedClass);
+      }
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

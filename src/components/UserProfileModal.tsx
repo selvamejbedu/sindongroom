@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppUser } from '../types';
 import { saveUserProfileInfo } from '../services/firestoreService';
 import { Edit3, Save, X } from 'lucide-react';
@@ -33,6 +33,26 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     );
   });
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      const emailPrefix = currentUser.email ? currentUser.email.split('@')[0].toLowerCase() : '';
+      const resolvedName =
+        currentUser.displayName &&
+        !currentUser.displayName.includes('@') &&
+        currentUser.displayName.toLowerCase() !== emailPrefix &&
+        currentUser.displayName !== 'admin'
+          ? currentUser.displayName
+          : localStorage.getItem('sindong_teacher_name') || '신동초 선생님';
+
+      setName(resolvedName);
+      setClassLabel(
+        currentUser.defaultClassLabel ||
+        localStorage.getItem('sindong_class_label') ||
+        '5학년 2반'
+      );
+    }
+  }, [isOpen, currentUser]);
 
   if (!isOpen) return null;
 

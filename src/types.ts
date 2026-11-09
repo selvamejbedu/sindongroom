@@ -156,7 +156,10 @@ export interface AIReservationParsed {
 export type NavSectionId =
   | 'dashboard'
   | 'timetable'
+  | 'daily-calendar'
+  | 'weekly-calendar'
   | 'calendar'
+  | 'semester-calendar'
   | 'new-reservation'
   | 'my-reservations'
   | 'all-reservations'
