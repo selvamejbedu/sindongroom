@@ -477,7 +477,7 @@ export default function App() {
   const fontClass = 'font-apple-sd';
 
   return (
-    <div className={`min-h-screen bg-[#F8FAFC] p-2.5 sm:p-4 lg:p-6 flex flex-col ${fontClass} text-[#0F172A]`}>
+    <div className={`min-h-screen bg-[#F8FAFC] p-1.5 sm:p-3 lg:p-4 flex flex-col ${fontClass} text-[#0F172A]`}>
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 text-xs font-semibold text-white bg-[#1E232A] rounded-2xl shadow-xl transition-all">
@@ -486,8 +486,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Main Enclosing Canvas Card matching the reference image */}
-      <div className="w-full max-w-[1600px] mx-auto bg-white rounded-[28px] sm:rounded-[32px] p-4 sm:p-6 lg:p-7 shadow-xs border border-[#E2EAE5] flex-1 flex flex-col gap-5">
+      {/* Main Enclosing Canvas Card - Full Width Maximum Screen Coverage */}
+      <div className="w-full max-w-none bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 shadow-xs border border-[#E2EAE5] flex-1 flex flex-col gap-4">
         {/* ================================================================== */}
         {/* CSS Selector: header.sticky */}
         {/* Modern, clean header matching the reference design */}

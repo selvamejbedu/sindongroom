@@ -292,15 +292,15 @@ export const MonthlyCalendarView: React.FC<{
                         onClickReservation(r);
                       }}
                       title={`${r.roomName} · ${periodLabel} (${r.classLabel})`}
-                      className={`px-1.5 py-1 rounded-lg border font-medium calendar-day-badge shadow-2xs hover:opacity-90 transition-all ${c.bg} ${c.border} ${c.text}`}
+                      className={`px-1.5 py-1 rounded-lg border font-bold calendar-day-badge shadow-2xs hover:opacity-90 transition-all ${c.bg} ${c.border} ${c.text}`}
                     >
                       <div className="flex items-center justify-between gap-1 leading-tight">
-                        <span className="font-bold truncate">{r.roomName}</span>
-                        <span className="shrink-0 opacity-85 tabular-nums text-[0.9em]">
+                        <span className="font-extrabold truncate text-xs">{r.roomName}</span>
+                        <span className="shrink-0 font-bold tabular-nums text-[10px] opacity-95">
                           {periodLabel}
                         </span>
                       </div>
-                      <div className="text-[0.92em] opacity-90 truncate leading-tight mt-0.5">
+                      <div className="text-[11px] font-extrabold truncate leading-tight mt-0.5 opacity-95">
                         {r.classLabel}
                       </div>
                     </div>
