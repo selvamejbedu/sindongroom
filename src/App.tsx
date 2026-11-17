@@ -678,7 +678,6 @@ export default function App() {
                   collapsed={sidebarCollapsed}
                   onClick={() => {
                     setSelectedRoomFilter('all');
-                    setCalendarViewMode('day');
                     setActiveNav('dashboard');
                   }}
                 />
@@ -864,7 +863,6 @@ export default function App() {
                       active={activeNav === 'dashboard'}
                       onClick={() => {
                         setSelectedRoomFilter('all');
-                        setCalendarViewMode('day');
                         setActiveNav('dashboard');
                         setMobileMenuOpen(false);
                       }}
@@ -1047,7 +1045,7 @@ export default function App() {
               />
             )}
 
-            {activeNav === 'semester-calendar' && (
+            {(activeNav === 'dashboard' || activeNav === 'semester-calendar') && (
               <SemesterCalendarView
                 referenceDate={referenceDate}
                 onSelectDateToTimetable={(d) => {
@@ -1129,9 +1127,8 @@ export default function App() {
               />
             )}
 
-            {/* Dashboard & Timetable (Primary Screen matching the reference design layout) */}
-            {(activeNav === 'dashboard' ||
-              activeNav === 'timetable' ||
+            {/* Timetable (Daily & Weekly Views) */}
+            {(activeNav === 'timetable' ||
               activeNav === 'daily-calendar' ||
               activeNav === 'weekly-calendar') && (
               <div className="w-full space-y-4">
