@@ -321,7 +321,7 @@ export const MonthlyCalendarView: React.FC<{
 };
 
 // ============================================================================
-// 1-1. Semester Calendar View (학기별 예약 달력 - 1학기: 3~7월 / 2학기: 8~1월)
+// 1-1. Semester Calendar View (학기별 예약 달력 - 1학기: 3~8월 / 2학기: 8~1월)
 // ============================================================================
 export const SemesterCalendarView: React.FC<{
   referenceDate: string;
@@ -350,10 +350,10 @@ export const SemesterCalendarView: React.FC<{
 
   // Determine school year and semester:
   // If month is 1 or 2, school year is refYear - 1 (2nd semester: 8~1월, 2월)
-  // 1학기: 3월 ~ 7월
+  // 1학기: 3월 ~ 8월
   // 2학기: 8월 ~ 다음해 1월
   const defaultSchoolYear = refMonth === 1 || refMonth === 2 ? refYear - 1 : refYear;
-  const defaultSemester: 1 | 2 = refMonth >= 3 && refMonth <= 7 ? 1 : 2;
+  const defaultSemester: 1 | 2 = refMonth >= 3 && refMonth <= 8 ? 1 : 2;
 
   const [schoolYear, setSchoolYear] = useState<number>(defaultSchoolYear);
   const [semester, setSemester] = useState<1 | 2>(defaultSemester);
@@ -368,7 +368,7 @@ export const SemesterCalendarView: React.FC<{
     }
   };
 
-  // 1학기: 3월 ~ 7월 (5개월)
+  // 1학기: 3월 ~ 8월 (6개월)
   // 2학기: 8월 ~ 다음해 1월 (6개월)
   const semesterMonths = useMemo(() => {
     if (semester === 1) {
@@ -378,6 +378,7 @@ export const SemesterCalendarView: React.FC<{
         { year: schoolYear, month: 5, label: `${schoolYear}년 5월` },
         { year: schoolYear, month: 6, label: `${schoolYear}년 6월` },
         { year: schoolYear, month: 7, label: `${schoolYear}년 7월` },
+        { year: schoolYear, month: 8, label: `${schoolYear}년 8월` },
       ];
     } else {
       return [
@@ -406,7 +407,7 @@ export const SemesterCalendarView: React.FC<{
           </div>
           <p className="text-xs text-[#8A91A0] dark:text-[#94A3B8] mt-0.5">
             {semester === 1
-              ? '1학기(3월~7월) 전체 일정을 한눈에 확인하고 원하는 일자의 특별실 시간표로 바로 이동합니다.'
+              ? '1학기(3월~8월) 전체 일정을 한눈에 확인하고 원하는 일자의 특별실 시간표로 바로 이동합니다.'
               : '2학기(8월~1월) 전체 일정을 한눈에 확인하고 원하는 일자의 특별실 시간표로 바로 이동합니다.'}
           </p>
         </div>
@@ -423,7 +424,7 @@ export const SemesterCalendarView: React.FC<{
                   : 'text-[#475467] dark:text-[#94A3B8] hover:text-[#1E232A] dark:hover:text-white'
               }`}
             >
-              1학기 (3월~7월)
+              1학기 (3월~8월)
             </button>
             <button
               type="button"
