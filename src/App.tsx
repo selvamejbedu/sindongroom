@@ -682,7 +682,11 @@ export default function App() {
                   }}
                 />
                 <SidebarItem
-                  icon={<Calendar className="w-4.5 h-4.5" />}
+                  icon={
+                    <span className="w-4.5 h-4.5 inline-flex items-center justify-center text-[15px] font-extrabold leading-none">
+                      D
+                    </span>
+                  }
                   label="일간 예약 달력"
                   active={activeNav === 'daily-calendar'}
                   collapsed={sidebarCollapsed}
@@ -693,7 +697,11 @@ export default function App() {
                   }}
                 />
                 <SidebarItem
-                  icon={<CalendarRange className="w-4.5 h-4.5" />}
+                  icon={
+                    <span className="w-4.5 h-4.5 inline-flex items-center justify-center text-[15px] font-extrabold leading-none">
+                      W
+                    </span>
+                  }
                   label="주간 예약 달력"
                   active={activeNav === 'weekly-calendar'}
                   collapsed={sidebarCollapsed}
@@ -704,7 +712,11 @@ export default function App() {
                   }}
                 />
                 <SidebarItem
-                  icon={<CalendarDays className="w-4.5 h-4.5" />}
+                  icon={
+                    <span className="w-4.5 h-4.5 inline-flex items-center justify-center text-[15px] font-extrabold leading-none">
+                      M
+                    </span>
+                  }
                   label="월간 예약 달력"
                   active={activeNav === 'calendar'}
                   collapsed={sidebarCollapsed}
@@ -714,7 +726,11 @@ export default function App() {
                   }}
                 />
                 <SidebarItem
-                  icon={<CalendarDays className="w-4.5 h-4.5" />}
+                  icon={
+                    <span className="w-4.5 h-4.5 inline-flex items-center justify-center text-[15px] font-extrabold leading-none">
+                      S
+                    </span>
+                  }
                   label="학기별 예약 달력"
                   active={activeNav === 'semester-calendar'}
                   collapsed={sidebarCollapsed}

@@ -549,7 +549,7 @@ export const SemesterCalendarView: React.FC<{
       )}
 
       {/* Grid of Months for the Semester */}
-      <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         {semesterMonths.map((mObj) => (
           <SemesterMonthBlock
             key={`${mObj.year}-${mObj.month}`}
@@ -649,7 +649,7 @@ const SemesterMonthBlock: React.FC<{
                   onSelectDateToTimetable(cell.date);
                 }
               }}
-              className={`min-h-[64px] p-1 rounded-xl border flex flex-col transition-all ${
+              className={`min-h-[72px] p-0.5 sm:p-1 rounded-xl border flex flex-col transition-all calendar-day-cell ${
                 !cell.isCurrentMonth
                   ? 'opacity-20 border-transparent bg-transparent pointer-events-none'
                   : 'bg-white dark:bg-[#111827] border-[#E5E9EE] dark:border-[#2A374F] hover:border-[#8055E8] hover:shadow-xs cursor-pointer'
@@ -679,6 +679,17 @@ const SemesterMonthBlock: React.FC<{
                 {dayRes.slice(0, 2).map((r) => {
                   const c = ROOM_COLOR_PALETTE[r.roomColor] || ROOM_COLOR_PALETTE.purple;
                   const pLabel = formatPeriodRangeLabel(r.startPeriod, r.endPeriod, periods, false);
+                  const compactPeriod = (() => {
+                    if (r.startPeriod === r.endPeriod) {
+                      return r.startPeriod === 7 ? '점심' : `${r.startPeriod}교시`;
+                    }
+                    if (r.startPeriod !== 7 && r.endPeriod !== 7) {
+                      return `${Math.min(r.startPeriod, r.endPeriod)}~${Math.max(r.startPeriod, r.endPeriod)}교시`;
+                    }
+                    const sText = r.startPeriod === 7 ? '점심' : `${r.startPeriod}교시`;
+                    const eText = r.endPeriod === 7 ? '점심' : `${r.endPeriod}교시`;
+                    return `${sText}~${eText}`;
+                  })();
                   return (
                     <div
                       key={r.id}
@@ -687,14 +698,15 @@ const SemesterMonthBlock: React.FC<{
                         onClickReservation(r);
                       }}
                       title={`${r.roomName} · ${pLabel} (${r.classLabel})`}
-                      className={`px-1 py-0.5 rounded text-[9px] font-bold leading-tight truncate border ${c.bg} ${c.border} ${c.text}`}
+                      className={`px-1 py-0.5 rounded font-bold border flex flex-wrap items-center justify-between gap-x-0.5 gap-y-0 min-w-0 semester-day-badge ${c.bg} ${c.border} ${c.text}`}
                     >
-                      {r.roomName}
+                      <span className="break-keep">{r.roomName}</span>
+                      <span className="shrink-0 tabular-nums semester-day-badge-period">{compactPeriod}</span>
                     </div>
                   );
                 })}
                 {dayRes.length > 2 && (
-                  <div className="text-[9px] text-[#8A91A0] pl-0.5 font-bold">
+                  <div className="text-[10px] text-[#8A91A0] pl-0.5 font-bold">
                     +{dayRes.length - 2}
                   </div>
                 )}
